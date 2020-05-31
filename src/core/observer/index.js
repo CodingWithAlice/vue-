@@ -34,6 +34,7 @@ export function toggleObserving (value: boolean) {
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
  */
+// 如果是对象，就会有一个observer实例与之对应
 export class Observer {
   value: any;
   dep: Dep;
@@ -44,6 +45,7 @@ export class Observer {
     this.dep = new Dep()
     this.vmCount = 0
     def(value, '__ob__', this)
+    // 当前对象是否是数组
     if (Array.isArray(value)) {
       if (hasProto) {
         protoAugment(value, arrayMethods)
@@ -52,6 +54,7 @@ export class Observer {
       }
       this.observeArray(value)
     } else {
+      // 如果是普通对象
       this.walk(value)
     }
   }
@@ -86,6 +89,7 @@ export class Observer {
  */
 function protoAugment (target, src: Object) {
   /* eslint-disable no-proto */
+  // 直接把原来的proto原型方法直接覆盖成我们拦截过后的方法
   target.__proto__ = src
   /* eslint-enable no-proto */
 }
@@ -104,6 +108,7 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
 
 /**
  * Attempt to create an observer instance for a value,
+ * 核心的目标是，返回一个observer对象的实例
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
@@ -113,7 +118,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
   }
   let ob: Observer | void
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
-    ob = value.__ob__
+    ob = value.__ob__ // 如果本身已经有了observer的实例，保存在这里：value.__ob__，就会直接赋值返回
   } else if (
     shouldObserve &&
     !isServerRendering() &&
@@ -121,6 +126,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    // 如果没有，调用observer的构造函数
     ob = new Observer(value)
   }
   if (asRootData && ob) {
@@ -131,6 +137,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 
 /**
  * Define a reactive property on an Object.
+ * 核心作用：给data中每一个key定义数据劫持
  */
 export function defineReactive (
   obj: Object,
@@ -153,16 +160,22 @@ export function defineReactive (
     val = obj[key]
   }
 
+  // 递归：如果这个val的值还是一个对象，那么接下来就要开始递归了
+  // 这里返回的childOb，是对象情况下的一个observer实例
   let childOb = !shallow && observe(val)
+  // 定义数据拦截
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
+      // 依赖收集
       if (Dep.target) {
-        dep.depend()
+        dep.depend() // 追加依赖关系
+        // 如果存在子observer
         if (childOb) {
           childOb.dep.depend()
+          // 还要注意如果是数组，还要继续处理
           if (Array.isArray(value)) {
             dependArray(value)
           }
@@ -187,6 +200,7 @@ export function defineReactive (
       } else {
         val = newVal
       }
+      // 额外判断，如果用户设置的值是对象，那么需要额外的响应化处理
       childOb = !shallow && observe(newVal)
       dep.notify()
     }

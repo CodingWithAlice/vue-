@@ -44,6 +44,7 @@ export default class Watcher {
 
   constructor (
     vm: Component,
+    // 用户可以会传一个更新函数
     expOrFn: string | Function,
     cb: Function,
     options?: ?Object,
@@ -77,8 +78,10 @@ export default class Watcher {
       : ''
     // parse expression for getter
     if (typeof expOrFn === 'function') {
+      // 如果是函数的话，直接给getter
       this.getter = expOrFn
     } else {
+      // 如果是个表达式的话，要转换成为一个函数
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = noop
@@ -90,6 +93,7 @@ export default class Watcher {
         )
       }
     }
+    // 一旦创建了一个watcher，就会调用一下get()方法，用于依赖收集
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -97,12 +101,15 @@ export default class Watcher {
 
   /**
    * Evaluate the getter, and re-collect dependencies.
+   * 用于依赖收集
    */
   get () {
+    // 设置Dep.target
     pushTarget(this)
     let value
     const vm = this.vm
     try {
+      // 触发依赖收集
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {

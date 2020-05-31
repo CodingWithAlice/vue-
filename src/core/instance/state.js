@@ -52,7 +52,7 @@ export function initState (vm: Component) {
   if (opts.methods) initMethods(vm, opts.methods)
   // data处理，响应化处理
   if (opts.data) {
-    initData(vm)
+    initData(vm) // 作用：判断重复，调用observe方法
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
@@ -148,7 +148,7 @@ function initData (vm: Component) {
       proxy(vm, `_data`, key)
     }
   }
-  // observe data
+  // observe data 这个方法就是：数据遍历的开始，核心作用是 判断数据对象的类型，做响应的处理
   observe(data, true /* asRootData */)
 }
 

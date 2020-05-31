@@ -6,11 +6,17 @@
     <title>Document</title>
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app">
+        <h2>h2标题</h2>
+        <p>{{foo}}</p>
+    </div>
     <script src="../../dist/vue.js"></script>
     <script>
         new Vue({
             el:'#app',
+            data: {
+                foo: 'foo',
+            }
         });
     </script>
 </body>

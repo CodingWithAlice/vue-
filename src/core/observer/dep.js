@@ -28,8 +28,10 @@ export default class Dep {
     remove(this.subs, sub)
   }
 
+  // 维护管理若干watcher
   depend () {
     if (Dep.target) {
+      // Dep是一个watcher实例， 这里是建立和watcher实例之间的关系 
       Dep.target.addDep(this)
     }
   }
@@ -56,6 +58,7 @@ Dep.target = null
 const targetStack = []
 
 export function pushTarget (target: ?Watcher) {
+  // Dep.target 的设置过程，把当前实例直接赋值到静态属性
   targetStack.push(target)
   Dep.target = target
 }
