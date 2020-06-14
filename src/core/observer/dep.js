@@ -20,10 +20,11 @@ export default class Dep {
     this.subs = []
   }
 
+  // 定义添加方法--添加依赖到指定的数组中 
   addSub (sub: Watcher) {
     this.subs.push(sub)
   }
-
+  // 定义删除方法--删除某个依赖，remove方法是自己定义的
   removeSub (sub: Watcher) {
     remove(this.subs, sub)
   }
@@ -32,12 +33,14 @@ export default class Dep {
   depend () {
     if (Dep.target) {
       // Dep是一个watcher实例， 这里是建立和watcher实例之间的关系 
+      // 如果Dep.target存在，即保存了依赖，就将它push进subs中
       Dep.target.addDep(this)
     }
   }
 
   notify () {
     // stabilize the subscriber list first
+    // 这里的slice()就是获取this.subs这个数组里面，所有的依赖
     const subs = this.subs.slice()
     if (process.env.NODE_ENV !== 'production' && !config.async) {
       // subs aren't sorted in scheduler if not running async
