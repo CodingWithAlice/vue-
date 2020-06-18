@@ -17,7 +17,7 @@ if (process.argv[2]) {
     return filters.some(f => b.output.file.indexOf(f) > -1 || b._name.indexOf(f) > -1)
   })
 } else {
-  // filter out weex builds by default
+  // filter out weex builds by default 
   builds = builds.filter(b => {
     return b.output.file.indexOf('weex') === -1
   })
