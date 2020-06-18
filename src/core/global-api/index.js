@@ -1,5 +1,5 @@
 /* @flow */
-
+// 在Vue对象本身上扩展全局的静态方法
 import config from '../config'
 import { initUse } from './use'
 import { initMixin } from './mixin'

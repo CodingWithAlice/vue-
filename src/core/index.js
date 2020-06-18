@@ -3,7 +3,7 @@ import { initGlobalAPI } from './global-api/index'
 import { isServerRendering } from 'core/util/env'
 import { FunctionalRenderContext } from 'core/vdom/create-functional-component'
 
-// 定义全局API
+// 初始化（定义）全局API
 initGlobalAPI(Vue)
 
 Object.defineProperty(Vue.prototype, '$isServer', {

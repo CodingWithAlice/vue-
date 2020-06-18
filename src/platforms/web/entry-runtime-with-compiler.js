@@ -1,9 +1,10 @@
 /* @flow */
-
+// 外部代码用import Vue from 'vue';进行引用时，就是执行这个文件进行初始化
 import config from 'core/config'
 import { warn, cached } from 'core/util/index'
 import { mark, measure } from 'core/util/perf'
 
+// Vue的来源
 import Vue from './runtime/index'
 import { query } from './util/index'
 import { compileToFunctions } from './compiler/index'

@@ -1,5 +1,5 @@
 /* @flow */
-
+// 这个文件是对Vue对象的一些扩展
 import Vue from 'core/index'
 import config from 'core/config'
 import { extend, noop } from 'shared/util'
