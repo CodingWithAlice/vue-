@@ -25,10 +25,16 @@ const weexFactoryPlugin = {
   }
 }
 
+// 一些指定路径的别名
 const aliases = require('./alias')
+// resolve方法的定义，找到对应地址的入口文件
 const resolve = p => {
+  // 以 p = 'web/entry-runtime.js'为例
+  // 通过/切割成数组["web", "entry-runtime.js"]，取第一个元素设置为base = "web"
   const base = p.split('/')[0]
+  // 找到别名文件中的路径，aliases[base] = /Users/haoling/Documents/GitHub/vue-/src/platforms/web
   if (aliases[base]) {
+    // p.slice(2)，从起始索引2开始提取原数组，p.slice(base.length + 1) = "entry-runtime.js"
     return path.resolve(aliases[base], p.slice(base.length + 1))
   } else {
     return path.resolve(__dirname, '../', p)
@@ -36,6 +42,8 @@ const resolve = p => {
 }
 
 const builds = {
+  // 这里统一注释， entry属性是表⽰构建的⼊⼝JS⽂件地址，dest属性表示构建后的js地址，
+  // format表⽰构建的格式，有三种
   // Runtime only (CommonJS). Used by bundlers e.g. Webpack & Browserify
   'web-runtime-cjs-dev': {
     entry: resolve('web/entry-runtime.js'),
