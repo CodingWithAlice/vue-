@@ -1,3 +1,4 @@
+// 导出一个getAllBuilds方法，把builds这个配置，通过一层映射和转换，生成rollup所需要的配置数组
 const path = require('path')
 const buble = require('rollup-plugin-buble')
 const alias = require('rollup-plugin-alias')
@@ -44,6 +45,7 @@ const resolve = p => {
 const builds = {
   // 这里统一注释， entry属性是表⽰构建的⼊⼝JS⽂件地址，dest属性表示构建后的js地址，
   // format表⽰构建的格式，有三种
+  // banner 就是一些注释，在上文中定义的变量
   // Runtime only (CommonJS). Used by bundlers e.g. Webpack & Browserify
   'web-runtime-cjs-dev': {
     entry: resolve('web/entry-runtime.js'),
@@ -221,8 +223,10 @@ const builds = {
   }
 }
 
+// 这里传入的name其实是上文定义的builds对象中的每一个key
 function genConfig (name) {
   const opts = builds[name]
+  // 重新定义config，这是rollup这个打包工具对应的配置结构
   const config = {
     input: opts.entry,
     external: opts.external,
@@ -275,5 +279,7 @@ if (process.env.TARGET) {
   module.exports = genConfig(process.env.TARGET)
 } else {
   exports.getBuild = genConfig
+  // 导出一个getAllBuilds方法，用keys获得一个数组，再用map遍历
+  // 功能是：把builds这个配置，通过一层映射和转换，生成rollup所需要的配置数组
   exports.getAllBuilds = () => Object.keys(builds).map(genConfig)
 }

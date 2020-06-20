@@ -7,7 +7,7 @@ const terser = require('terser')
 if (!fs.existsSync('dist')) {
   fs.mkdirSync('dist')
 }
-
+// 先从配置文件读取配置，再用命令行参数对配置文件进行过滤，构建出不同用途的Vue.js
 let builds = require('./config').getAllBuilds()
 
 // filter builds via command line arg

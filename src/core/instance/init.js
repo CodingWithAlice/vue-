@@ -15,6 +15,7 @@ let uid = 0
 
 export function initMixin (Vue: Class<Component>) {
   Vue.prototype._init = function (options?: Object) {
+    // 合并配置
     const vm: Component = this
     // a uid
     vm._uid = uid++
@@ -50,8 +51,11 @@ export function initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
+    // 初始化⽣命周期
     initLifecycle(vm)  // 初始化$parent,$root,$refs,$children
+    // 初始化事件中⼼
     initEvents(vm)     // 处理父组件传递的监听器
+    // 初始化渲染
     initRender(vm)     // $scopedSlots,$slots,_c(),$createElement()的声明
     // 调用了生命周期的钩子
     callHook(vm, 'beforeCreate')
@@ -66,7 +70,8 @@ export function initMixin (Vue: Class<Component>) {
       mark(endTag)
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
-    // 如果写的时候写了el，实例会自动执行一次$mount
+    // 如果初始化的时候检测到el，实例会自动执行一次$mount挂载vm
+    // 挂载的⽬标就是把模板渲染成最终的 DOM
     if (vm.$options.el) {
       vm.$mount(vm.$options.el)
     }
