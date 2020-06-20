@@ -11,8 +11,10 @@ export * from './element'
  */
 export function query (el: string | Element): Element {
   if (typeof el === 'string') {
+    // 如果el是个字符串
     const selected = document.querySelector(el)
     if (!selected) {
+      // 如果找不到这个类型，就先报个错，然后返回一个空div的DOM对象
       process.env.NODE_ENV !== 'production' && warn(
         'Cannot find element: ' + el
       )
@@ -20,6 +22,7 @@ export function query (el: string | Element): Element {
     }
     return selected
   } else {
+    // 如果不是字符串，那么就证明el已经是一个DOM对象
     return el
   }
 }
