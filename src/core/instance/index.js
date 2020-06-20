@@ -6,7 +6,7 @@ import { eventsMixin } from './events'
 import { lifecycleMixin } from './lifecycle'
 import { warn } from '../util/index'
 
-// 是一个构造函数，需要用new Vue去实例化
+// 是一个构造函数，必须需要用new Vue去实例化
 function Vue (options) {
   if (process.env.NODE_ENV !== 'production' &&
     !(this instanceof Vue)

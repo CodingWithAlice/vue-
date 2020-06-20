@@ -1,5 +1,5 @@
 /* @flow */
-// 这个文件是对Vue对象的一些扩展
+// 这个文件是对Vue对象的一些扩展，静态的全局配置 
 import Vue from 'core/index'
 import config from 'core/config'
 import { extend, noop } from 'shared/util'
@@ -30,7 +30,7 @@ Vue.config.isUnknownElement = isUnknownElement
 extend(Vue.options.directives, platformDirectives)
 extend(Vue.options.components, platformComponents)
 
-// 2、还实现了patch方法，打补丁
+// 2、实现了patch方法
 // install platform patch function
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 

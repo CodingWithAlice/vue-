@@ -34,7 +34,8 @@ const sharedPropertyDefinition = {
   get: noop,
   set: noop
 }
-
+// 自定义了一个proxy方法，通过sharedPropertyDefinition对象定义了一个get和set方法
+// proxy(vm, `_data`, key)
 export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter () {
     return this[sourceKey][key]
@@ -42,17 +43,20 @@ export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.set = function proxySetter (val) {
     this[sourceKey][key] = val
   }
+  // 通过Object.defineProperty这个方法，将target（传入的vm）的key进行get和set方法的代理
+  // 当我们访问this.message的时候，就是访问this._data.message
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
+  // 是否对props、methods、data、computed、watch进行了定义，有的话就进行初始化
   if (opts.props) initProps(vm, opts.props)
   if (opts.methods) initMethods(vm, opts.methods)
   // data处理，响应化处理
   if (opts.data) {
-    initData(vm) // 作用：判断重复，调用observe方法
+    initData(vm) // 作用：判断重复key名，调用observe方法
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
@@ -111,10 +115,13 @@ function initProps (vm: Component, propsOptions: Object) {
 }
 
 function initData (vm: Component) {
+  // 从我们定义的vm.$options.data中获取对象
   let data = vm.$options.data
+  // 这里对vm._data进行了赋值
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
+  // 如果data不是一个函数的话，开发环境下会报一个警报
   if (!isPlainObject(data)) {
     data = {}
     process.env.NODE_ENV !== 'production' && warn(
@@ -128,6 +135,8 @@ function initData (vm: Component) {
   const props = vm.$options.props
   const methods = vm.$options.methods
   let i = keys.length
+  // 这里拿到data、props、methods里面的key，进行遍历避免重复
+  // 由于三者最后都会以key挂载到vm/this的实例上
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
@@ -145,6 +154,7 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      // 避免了重复后，使用proxy方法进行代理
       proxy(vm, `_data`, key)
     }
   }
