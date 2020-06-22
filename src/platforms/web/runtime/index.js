@@ -41,7 +41,8 @@ Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
 ): Component {
-  // 如果在浏览器中，会用query方法将字符串的el转换成DOM对象的
+  // 和带compiler的runtime版本对比，由于runtime only版本的runtime会直接执行到这个原先原型上的$mount方法，所以重新执行下query方法对el进行处理，变成DOM对象的字符串
+  // 如果在浏览器中，会用query方法将字符串的el转换成DOM对象的字符串
   el = el && inBrowser ? query(el) : undefined
   return mountComponent(this, el, hydrating)
 }

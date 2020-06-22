@@ -140,16 +140,20 @@ export function lifecycleMixin (Vue: Class<Component>) {
   }
 }
 
+// 主要任务：完成整个渲染工作
 export function mountComponent (
   vm: Component,
   el: ?Element,
   hydrating?: boolean
 ): Component {
+  // 缓存传入的el 
   vm.$el = el
   if (!vm.$options.render) {
+    // 如果没有render函数，且template没有正确转换成render函数，则定义一个空VNODE
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
+      // 如果使用的是runtime only的版本，但是又不写render函数/写了template模版，就会出发警告
       if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
         vm.$options.el || el) {
         warn(
@@ -168,8 +172,11 @@ export function mountComponent (
   }
   callHook(vm, 'beforeMount')
 
+  // 定义了一个updateComponent方法，最终就是调用vm._render()、vm._update()方法
+  // 这个方法被下方的new Watch创建实例的时候作为回调函数使用
   let updateComponent
   /* istanbul ignore if */
+  // mark是一些性能埋点的东西
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
     updateComponent = () => {
       const name = vm._name
@@ -189,6 +196,8 @@ export function mountComponent (
     }
   } else {
     updateComponent = () => {
+      // vm._render()生成VNODE
+      // vm._update更新DOM
       vm._update(vm._render(), hydrating)
     }
   }
@@ -196,6 +205,8 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  // 渲染Watcher：实例化渲染一个Watcher，updateComponent作为回调函数
+  // new Watcher的两个作用：1、初始化时，执行回调函数；2、当vm中监测的数据发生变化时，执行回调函数；
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
@@ -203,12 +214,16 @@ export function mountComponent (
       }
     }
   }, true /* isRenderWatcher */)
+// 参数：vm-vue的实例，expOrFun-函数，cb-空函数，options-配置，boolean 
   hydrating = false
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
+  //  vm.$vnode表⽰Vue实例的⽗虚拟Node，所以它为Null则表⽰当前是根Vue的实例
   if (vm.$vnode == null) {
+    // 如果是根结点时，设置vm._isMounted为true，表示这个实例已经挂载了
     vm._isMounted = true
+    // 同时执行mounted钩子函数
     callHook(vm, 'mounted')
   }
   return vm

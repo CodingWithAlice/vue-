@@ -43,19 +43,24 @@ export default class Watcher {
   value: any;
 
   constructor (
+    // vue的实例
     vm: Component,
     // 用户可以会传一个更新函数
     expOrFn: string | Function,
+    // 回调函数
     cb: Function,
+    // 配置
     options?: ?Object,
+    // bollean
     isRenderWatcher?: boolean
   ) {
     this.vm = vm
     if (isRenderWatcher) {
+      // 如果要渲染watcher，就是给实例添加一个_watcher
       vm._watcher = this
     }
     vm._watchers.push(this)
-    // options
+    // options-配置 
     if (options) {
       this.deep = !!options.deep
       this.user = !!options.user
@@ -78,7 +83,7 @@ export default class Watcher {
       : ''
     // parse expression for getter
     if (typeof expOrFn === 'function') {
-      // 如果是函数的话，直接给getter
+      // 如果expOrFn是函数的话，直接给getter
       this.getter = expOrFn
     } else {
       // 如果是个表达式的话，要转换成为一个函数
@@ -109,7 +114,7 @@ export default class Watcher {
     let value
     const vm = this.vm
     try {
-      // 触发依赖收集
+      // 触发依赖收集，这个getter就是上面传入的expOrFun函数
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
