@@ -28,10 +28,13 @@ export function initRender (vm: Component) {
   // so that we get proper render context inside it.
   // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
+  // vm._c和vm.$createElement一起理解
+  // vm._c是被模版编译成的render函数使用
+  // vm.$createElement是用户手写的render函数使用
+  // 两个方法参数相同，并且内部都调用了createElement方法
   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
-  // normalization is always applied for the public version, used in
-  // user-written render functions.
-  // 这就是render(h)里面的h，研究虚拟DOM的入口点
+  // normalization is always applied for the public version, used in user-written render functions.
+  // 这就是render(h)里面的参数，研究虚拟DOM的入口点
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
 
   // $attrs & $listeners are exposed for easier HOC creation.
@@ -67,6 +70,7 @@ export function renderMixin (Vue: Class<Component>) {
     return nextTick(fn, this)
   }
 
+  // 定义_render函数，最后返回一个vnode
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
     const { render, _parentVnode } = vm.$options
@@ -89,6 +93,7 @@ export function renderMixin (Vue: Class<Component>) {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm
+      // 调用render方法
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
