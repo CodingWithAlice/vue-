@@ -30,8 +30,10 @@ Vue.config.isUnknownElement = isUnknownElement
 extend(Vue.options.directives, platformDirectives)
 extend(Vue.options.components, platformComponents)
 
-// 2、实现了patch方法
+// 2、定义了__patch__方法
 // install platform patch function
+// 在浏览器端渲染：需要 patch ⽅法
+// 在服务端渲染：没有真实的浏览器DOM环境,所以不需要把 VNode 最终转换成DOM，空函数noop即可
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // 1、定义了$mount方法

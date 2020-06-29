@@ -122,6 +122,7 @@ export function createPatchFunction (backend) {
 
   let creatingElmInVPre = 0
 
+  // 函数作用：通过虚拟节点创建真实的 DOM 并插⼊到它的⽗节点中
   function createElm (
     vnode,
     insertedVnodeQueue,
@@ -141,6 +142,7 @@ export function createPatchFunction (backend) {
     }
 
     vnode.isRootInsert = !nested // for transition enter check
+    // createComponent ⽅法⽬的是尝试创建⼦组件
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
       return
     }
@@ -148,7 +150,9 @@ export function createPatchFunction (backend) {
     const data = vnode.data
     const children = vnode.children
     const tag = vnode.tag
+    // 判断 vnode 是否包含 tag
     if (isDef(tag)) {
+      //  对tag的合法性在⾮⽣产环境下做校验，看是否是⼀个合法标签
       if (process.env.NODE_ENV !== 'production') {
         if (data && data.pre) {
           creatingElmInVPre++
@@ -163,6 +167,7 @@ export function createPatchFunction (backend) {
         }
       }
 
+      // 调⽤平台 DOM 的操作去创建⼀个占位符元素
       vnode.elm = vnode.ns
         ? nodeOps.createElementNS(vnode.ns, tag)
         : nodeOps.createElement(tag, vnode)
@@ -188,8 +193,10 @@ export function createPatchFunction (backend) {
           insert(parentElm, vnode.elm, refElm)
         }
       } else {
+        // 调⽤ createChildren ⽅法去创建⼦元素
         createChildren(vnode, children, insertedVnodeQueue)
         if (isDef(data)) {
+          // 再调⽤invokeCreateHooks⽅法执⾏所有的 create 的钩⼦
           invokeCreateHooks(vnode, insertedVnodeQueue)
         }
         insert(parentElm, vnode.elm, refElm)
@@ -199,9 +206,12 @@ export function createPatchFunction (backend) {
         creatingElmInVPre--
       }
     } else if (isTrue(vnode.isComment)) {
+      // 通过tag+isComment判断是注释
       vnode.elm = nodeOps.createComment(vnode.text)
+      // insert方法把 DOM 插⼊到⽗节点中
       insert(parentElm, vnode.elm, refElm)
     } else {
+      // 判断为纯文本节点
       vnode.elm = nodeOps.createTextNode(vnode.text)
       insert(parentElm, vnode.elm, refElm)
     }
@@ -269,6 +279,7 @@ export function createPatchFunction (backend) {
     insert(parentElm, vnode.elm, refElm)
   }
 
+  // 调⽤⼀些 nodeOps 把⼦节点插⼊到⽗节点中
   function insert (parent, elm, ref) {
     if (isDef(parent)) {
       if (isDef(ref)) {
@@ -281,12 +292,14 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // 遍历⼦虚拟节点，递归调⽤ createElm
   function createChildren (vnode, children, insertedVnodeQueue) {
     if (Array.isArray(children)) {
       if (process.env.NODE_ENV !== 'production') {
         checkDuplicateKeys(children)
       }
       for (let i = 0; i < children.length; ++i) {
+        // 参数vnode.elm作为⽗容器的 DOM 节点占位符传⼊
         createElm(children[i], insertedVnodeQueue, vnode.elm, null, true, children, i)
       }
     } else if (isPrimitive(vnode.text)) {
@@ -301,6 +314,7 @@ export function createPatchFunction (backend) {
     return isDef(vnode.tag)
   }
 
+  // 执⾏所有的 create 的钩⼦并把 vnode push 到 insertedVnodeQueue 中
   function invokeCreateHooks (vnode, insertedVnodeQueue) {
     for (let i = 0; i < cbs.create.length; ++i) {
       cbs.create[i](emptyNode, vnode)
@@ -697,6 +711,12 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // 最终返回了一个patch方法
+  // 参数含义：
+  // oldVnode表⽰旧的VNode节点，它也可以不存在或者是⼀个DOM对象 
+  // vnode表⽰执⾏ _render 后返回的 VNode 的节点
+  // hydrating表⽰是否是服务端渲染，非服务端false
+  // removeOnly是给 transition-group ⽤的
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
@@ -740,14 +760,16 @@ export function createPatchFunction (backend) {
           }
           // either not server-rendered, or hydration failed.
           // create an empty node and replace it
+          // 调用emptyNodeAt把oldVnode转换成 VNode 对象
           oldVnode = emptyNodeAt(oldVnode)
         }
 
         // replacing existing element
         const oldElm = oldVnode.elm
+        // parentElm是oldElm的父元素
         const parentElm = nodeOps.parentNode(oldElm)
 
-        // create new node
+        // create new node 首次渲染调用createElm方法
         createElm(
           vnode,
           insertedVnodeQueue,

@@ -58,19 +58,26 @@ export function initLifecycle (vm: Component) {
 }
 
 export function lifecycleMixin (Vue: Class<Component>) {
+  // _update的作⽤是把 VNode 渲染成真实的 DOM
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
     const prevEl = vm.$el
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
     vm._vnode = vnode
-    // Vue.prototype.__patch__ is injected in entry points
-    // based on the rendering backend used.
+    // _update被调⽤的时机有 2 个，⼀个是⾸次渲染，⼀个是数据更新的时候
+    // _update的核⼼就是调⽤ vm.__patch__ ⽅法
+    // __patch__方法在不同平台定义不同：weex、web
     if (!prevVnode) {
-      // initial render
+      // initial render 首次渲染的时候
+      // 参数含义：
+      // vm.$el是在mountComponent函数做的缓存，表⽰旧的VNode节点，它也可以不存在或者是⼀个DOM对象 
+      // vnode表⽰执⾏ _render 后返回的 VNode 的节点
+      // hydrating表⽰是否是服务端渲染
+      // removeOnly是给 transition-group ⽤的
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
-      // updates
+      // updates 数据更新的时候
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
