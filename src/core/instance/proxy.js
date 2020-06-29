@@ -34,6 +34,7 @@ if (process.env.NODE_ENV !== 'production') {
     )
   }
 
+  // 判断当前浏览器是否支持ES6的proxy方法
   const hasProxy =
     typeof Proxy !== 'undefined' && isNative(Proxy)
 
@@ -52,6 +53,7 @@ if (process.env.NODE_ENV !== 'production') {
     })
   }
 
+  // 支持的情况下，
   const hasHandler = {
     has (target, key) {
       const has = key in target
