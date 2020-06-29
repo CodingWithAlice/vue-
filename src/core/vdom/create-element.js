@@ -44,6 +44,12 @@ export function createElement (
   return _createElement(context, tag, data, children, normalizationType)
 }
 
+// context 表⽰ VNode 的上下⽂环境
+// tag 表⽰标签
+// data 表⽰ VNode 的数据（VNodeData类型，可以在flow/vnode.js中找到定义）
+// children 表⽰当前 VNode 的⼦节点，它接下来需要被规范为标准的 VNode 数组
+// normalizationType 表⽰⼦节点规范的类型，类型不同规范的⽅法也就不⼀样，它主要是参考 render 函数是编译⽣成的还是⽤户⼿写的
+// 该方法有很多流程，先重点看两个：children的规范化、VNode的创建
 export function _createElement (
   context: Component,
   tag?: string | Class<Component> | Function | Object,
@@ -87,11 +93,15 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
+  // children的规范化，最终children变成了⼀个类型为 VNode 的Array
   if (normalizationType === ALWAYS_NORMALIZE) {
+    // 如果render函数是用户手写的or如果编译slot、v-for的时候产生嵌套数组的情况
     children = normalizeChildren(children)
-  } else if (normalizationType === SIMPLE_NORMALIZE) {
+  } else if (normalizationType === SIMPLE_NORMALIZE) 
+    // 如果render函数是template经过函数编译生成的
     children = simpleNormalizeChildren(children)
   }
+  // vnode的创建
   let vnode, ns
   if (typeof tag === 'string') {
     let Ctor

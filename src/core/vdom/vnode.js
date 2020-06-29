@@ -1,5 +1,9 @@
 /* @flow */
 
+// VNODE的定义
+// 它的核⼼定义是⼏个关键属性，标签名、数据、⼦ 节点、键值等
+// 其它属性都是都是⽤来扩展 VNode 的灵活性以及实现⼀些特殊 feature 的
+// 由于 VNode 只是⽤来映射到真实 DOM 的渲染，不需要包含操作 DOM 的⽅法，因此它是⾮常轻量和简单的
 export default class VNode {
   tag: string | void;
   data: VNodeData | void;
