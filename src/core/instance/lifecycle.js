@@ -71,7 +71,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     if (!prevVnode) {
       // initial render 首次渲染的时候
       // 参数含义：
-      // vm.$el是在mountComponent函数做的缓存，表⽰旧的VNode节点，它也可以不存在或者是⼀个DOM对象 
+      // vm.$el是在mountComponent函数做的缓存，是真实的DOM，oldVnode表⽰旧的VNode节点，它也可以不存在或者是⼀个DOM对象 
       // vnode表⽰执⾏ _render 后返回的 VNode 的节点
       // hydrating表⽰是否是服务端渲染
       // removeOnly是给 transition-group ⽤的

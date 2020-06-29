@@ -71,8 +71,11 @@ export function createPatchFunction (backend) {
   let i, j
   const cbs = {}
 
+  // 把传入的参数进行拆解
   const { modules, nodeOps } = backend
 
+  // 把modules中的钩子函数保存在cbs中
+  // patch过程中，到了相关的钩子就会执行相对应的钩子函数
   for (i = 0; i < hooks.length; ++i) {
     cbs[hooks[i]] = []
     for (j = 0; j < modules.length; ++j) {
@@ -82,7 +85,9 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // 真实的DOM转换成VNode
   function emptyNodeAt (elm) {
+    // 注意，最后一个参数elm是传入的oldVnode，即真实DOM
     return new VNode(nodeOps.tagName(elm).toLowerCase(), {}, [], undefined, elm)
   }
 
@@ -193,7 +198,7 @@ export function createPatchFunction (backend) {
           insert(parentElm, vnode.elm, refElm)
         }
       } else {
-        // 调⽤ createChildren ⽅法去创建⼦元素
+        // 调⽤ createChildren ⽅法去创建⼦节点
         createChildren(vnode, children, insertedVnodeQueue)
         if (isDef(data)) {
           // 再调⽤invokeCreateHooks⽅法执⾏所有的 create 的钩⼦
@@ -713,11 +718,13 @@ export function createPatchFunction (backend) {
 
   // 最终返回了一个patch方法
   // 参数含义：
-  // oldVnode表⽰旧的VNode节点，它也可以不存在或者是⼀个DOM对象 
+  // oldVnode表⽰旧的VNode节点，它也可以不存在或者是⼀个DOM对象，注意：传入的vm.$el是真实的DOM
   // vnode表⽰执⾏ _render 后返回的 VNode 的节点
   // hydrating表⽰是否是服务端渲染，非服务端false
   // removeOnly是给 transition-group ⽤的
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
+    debugger
+    // 删除的逻辑
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
       return
@@ -731,6 +738,7 @@ export function createPatchFunction (backend) {
       isInitialPatch = true
       createElm(vnode, insertedVnodeQueue)
     } else {
+      // 注意：传入的oldVnode，即vm.$el，是真实的DOM
       const isRealElement = isDef(oldVnode.nodeType)
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
         // patch existing root node
@@ -744,6 +752,7 @@ export function createPatchFunction (backend) {
             oldVnode.removeAttribute(SSR_ATTR)
             hydrating = true
           }
+          // 服务端渲染
           if (isTrue(hydrating)) {
             if (hydrate(oldVnode, vnode, insertedVnodeQueue)) {
               invokeInsertHook(vnode, insertedVnodeQueue, true)
@@ -760,11 +769,12 @@ export function createPatchFunction (backend) {
           }
           // either not server-rendered, or hydration failed.
           // create an empty node and replace it
-          // 调用emptyNodeAt把oldVnode转换成 VNode 对象
+          // 调用emptyNodeAt把oldVnode（真实DOM）转换成 VNode 对象
           oldVnode = emptyNodeAt(oldVnode)
         }
 
         // replacing existing element
+        // oldElm获取到原真实DOM
         const oldElm = oldVnode.elm
         // parentElm是oldElm的父元素
         const parentElm = nodeOps.parentNode(oldElm)
