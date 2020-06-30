@@ -96,8 +96,11 @@ const componentVNodeHooks = {
   }
 }
 
+// 默认这几个钩子init、prepatch、insert、destroy
 const hooksToMerge = Object.keys(componentVNodeHooks)
 
+// 3个核⼼流程：构造⼦类构造函数，安装组件钩⼦函数和实例化vnode
+// 参数分析：Ctor支持多种类型；data是VNode相关Data；context这里指的就是vm实例；children是子VNode
 export function createComponent (
   Ctor: Class<Component> | Function | Object | void,
   data: ?VNodeData,
@@ -109,15 +112,29 @@ export function createComponent (
     return
   }
 
+  // 构造⼦类构造函数
+  // context是createElement(vm, a, b, c, d, true)时传入的vm实例
+  // 最初初始化Vue的时候，在src/core/global-api/index.js的initGlobalAPI方法中Vue.options._base = Vue
+  // 在src/core/instance/init.js的_init方法中将Vue.options扩展到vm.$options上
+  /*
+      vm.$options = mergeOptions(
+        resolveConstructorOptions(vm.constructor),
+        options || {},
+        vm
+      )
+  */
+  // 那么就可以得到基类构造器baseCtor就是Vue
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
   if (isObject(Ctor)) {
+    // baseCtor.extend方法即Vue.extend，定义在src/core/global-api/extend.js中
+    // 如果传入的Ctor是个对象的话，会把Ctor转换成一个新的构造器
     Ctor = baseCtor.extend(Ctor)
   }
 
   // if at this stage it's not a constructor or an async component factory,
-  // reject.
+  // reject.如果不能正确返回子构造器函数，就会报错
   if (typeof Ctor !== 'function') {
     if (process.env.NODE_ENV !== 'production') {
       warn(`Invalid Component definition: ${String(Ctor)}`, context)
@@ -125,7 +142,7 @@ export function createComponent (
     return
   }
 
-  // async component
+  // async component 异步组件的处理
   let asyncFactory
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
@@ -147,29 +164,32 @@ export function createComponent (
   data = data || {}
 
   // resolve constructor options in case global mixins are applied after
-  // component constructor creation
+  // component constructor creation options处理
   resolveConstructorOptions(Ctor)
 
   // transform component v-model data into props & events
+  // v-model判断处理
   if (isDef(data.model)) {
     transformModel(Ctor.options, data)
   }
 
-  // extract props
+  // extract props 将props处理成propsData
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
-  // functional component
+  // functional component 函数组件的处理
   if (isTrue(Ctor.options.functional)) {
     return createFunctionalComponent(Ctor, propsData, data, context, children)
   }
 
   // extract listeners, since these needs to be treated as
   // child component listeners instead of DOM listeners
+  // 自定义事件的处理
   const listeners = data.on
   // replace with listeners with .native modifier
   // so it gets processed during parent component patch.
   data.on = data.nativeOn
 
+  // 抽象组件
   if (isTrue(Ctor.options.abstract)) {
     // abstract components do not keep anything
     // other than props & listeners & slot
@@ -183,9 +203,13 @@ export function createComponent (
   }
 
   // install component management hooks onto the placeholder node
+  // 安装组件钩⼦函数
   installComponentHooks(data)
 
   // return a placeholder vnode
+  // 实例化vnode，需要注意下：组件的 vnode 是没有children的，componentOptions中有一个children
+  // new VNode传入的参数tag,data,children,text,elm,context,componentOptions,asyncFactory
+  // vue-component-这个是前缀标识
   const name = Ctor.options.name || tag
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
@@ -223,13 +247,17 @@ export function createComponentInstanceForVnode (
   return new vnode.componentOptions.Ctor(options)
 }
 
+// 保证组件VNode在patch过程中，一定会执行hooksToMerge中的钩子函数
 function installComponentHooks (data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
+  // 遍历hooksToMerge：init、prepatch、insert、destroy
   for (let i = 0; i < hooksToMerge.length; i++) {
     const key = hooksToMerge[i]
     const existing = hooks[key]
     const toMerge = componentVNodeHooks[key]
     if (existing !== toMerge && !(existing && existing._merged)) {
+      // 将hooksToMerge中的hooks merge到data.hook
+      // 如果钩子函数命名已存在，通过mergeHook合并
       hooks[key] = existing ? mergeHook(toMerge, existing) : toMerge
     }
   }
@@ -238,6 +266,7 @@ function installComponentHooks (data: VNodeData) {
 function mergeHook (f1: any, f2: any): Function {
   const merged = (a, b) => {
     // flow complains about extra args which is why we use any
+    // 分别将传入的两个函数都执行一遍
     f1(a, b)
     f2(a, b)
   }
