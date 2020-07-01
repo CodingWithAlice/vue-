@@ -32,7 +32,7 @@ export function initExtend (Vue: GlobalAPI) {
       return cachedCtors[SuperId]
     }
 
-    // 在开发环境对name进行一层校验 
+    // 在开发环境对name进行一层合法性校验 
     const name = extendOptions.name || Super.options.name
     if (process.env.NODE_ENV !== 'production' && name) {
       // 定义在src/core/util/options.js中，name以英文开头，并且不能是内置HTML标签
@@ -81,6 +81,7 @@ export function initExtend (Vue: GlobalAPI) {
       Sub[type] = Super[type]
     })
     // enable recursive self-lookup
+    // 自查找所用
     if (name) {
       Sub.options.components[name] = Sub
     }

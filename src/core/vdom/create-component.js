@@ -248,6 +248,7 @@ export function createComponentInstanceForVnode (
 }
 
 // 保证组件VNode在patch过程中，一定会执行hooksToMerge中的钩子函数
+// 代码中就是把hooksToMerge中的钩子函数赋值给入参
 function installComponentHooks (data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   // 遍历hooksToMerge：init、prepatch、insert、destroy
