@@ -148,6 +148,7 @@ export function createPatchFunction (backend) {
 
     vnode.isRootInsert = !nested // for transition enter check
     // createComponent ⽅法⽬的是尝试创建⼦组件
+    // 当vnode是组件类型的vnode
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
       return
     }
@@ -172,7 +173,7 @@ export function createPatchFunction (backend) {
         }
       }
 
-      // 调⽤平台 DOM 的操作去创建⼀个占位符元素
+      // 调⽤平台 DOM 的操作去创建⼀个占位符元素，原生的一个DOM节点
       vnode.elm = vnode.ns
         ? nodeOps.createElementNS(vnode.ns, tag)
         : nodeOps.createElement(tag, vnode)
@@ -199,11 +200,13 @@ export function createPatchFunction (backend) {
         }
       } else {
         // 调⽤ createChildren ⽅法去创建⼦节点
+        // 【递归】遍历children，执行createElm方法
         createChildren(vnode, children, insertedVnodeQueue)
         if (isDef(data)) {
           // 再调⽤invokeCreateHooks⽅法执⾏所有的 create 的钩⼦
           invokeCreateHooks(vnode, insertedVnodeQueue)
         }
+        // 这里进行插入操作的时候，parentElm如果为空，则不进行任何插入操作
         insert(parentElm, vnode.elm, refElm)
       }
 
@@ -225,16 +228,21 @@ export function createPatchFunction (backend) {
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data
     if (isDef(i)) {
+      // keep-alive逻辑
       const isReactivated = isDef(vnode.componentInstance) && i.keepAlive
+      // 在之前render调用createComponent时，给data.hook添加了init、prepatch、insert、destroy四个钩子函数
       if (isDef(i = i.hook) && isDef(i = i.init)) {
         i(vnode, false /* hydrating */)
       }
-      // after calling the init hook, if the vnode is a child component
-      // it should've created a child instance and mounted it. the child
-      // component also has set the placeholder vnode's elm.
+      // after calling the init hook, if the vnode is a child componentit should've created a child instance and mounted it.
+      // the child component also has set the placeholder vnode's elm.
       // in that case we can just return the element and be done.
+      // 当执行完所有的init方法，完成了整个patch之后，执行到这一步
       if (isDef(vnode.componentInstance)) {
+        // initComponent将vnode.elm进行了赋值
         initComponent(vnode, insertedVnodeQueue)
+        // 子组件的插入是在执行到createComponent的insert的时候会进行插入
+        // 插入顺序是先子后父
         insert(parentElm, vnode.elm, refElm)
         if (isTrue(isReactivated)) {
           reactivateComponent(vnode, insertedVnodeQueue, parentElm, refElm)
@@ -249,6 +257,7 @@ export function createPatchFunction (backend) {
       insertedVnodeQueue.push.apply(insertedVnodeQueue, vnode.data.pendingInsert)
       vnode.data.pendingInsert = null
     }
+    // 这里的$el就是__patch__方法返回的DOM结果
     vnode.elm = vnode.componentInstance.$el
     if (isPatchable(vnode)) {
       invokeCreateHooks(vnode, insertedVnodeQueue)
@@ -286,6 +295,7 @@ export function createPatchFunction (backend) {
 
   // 调⽤⼀些 nodeOps 把⼦节点插⼊到⽗节点中
   function insert (parent, elm, ref) {
+    // 如果传入的parent为空，不做任何DOM插入操作
     if (isDef(parent)) {
       if (isDef(ref)) {
         if (nodeOps.parentNode(ref) === parent) {
@@ -735,6 +745,7 @@ export function createPatchFunction (backend) {
 
     if (isUndef(oldVnode)) {
       // empty mount (likely as component), create new root element
+      // 组件VNode渲染后oldVnode即vm.$el是undefined
       isInitialPatch = true
       createElm(vnode, insertedVnodeQueue)
     } else {

@@ -21,19 +21,27 @@ import {
 export let activeInstance: any = null
 export let isUpdatingChildComponent: boolean = false
 
+// 在Vue.prototype._update中执行该函数
 export function setActiveInstance(vm: Component) {
+  // 通过prevActiveInstance记录上一个vue实例
   const prevActiveInstance = activeInstance
+  // 将正在激活的vm实例用activeInstance进行保存
+  // 在继续创建子组件的时候，当前的activeInstance可以作为父组件实例传递
   activeInstance = vm
   return () => {
+    // 执行完patch之后，执行这个方法可以将activeInstance恢复到上一个activeInstance
     activeInstance = prevActiveInstance
   }
 }
 
+// 建立父子组件的关系
 export function initLifecycle (vm: Component) {
-    // 获取到输入选项
+  // 获取到输入选项，传入的vm是子组件的实例
   const options = vm.$options
 
   // locate first non-abstract parent
+  // options.parent就是在src/core/vdom/create-component.js传入的当前页面之前_update时保存的activeInstance
+  // parent是父组件的实例
   let parent = options.parent
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
@@ -43,6 +51,7 @@ export function initLifecycle (vm: Component) {
     parent.$children.push(vm)
   }
 
+  // 把当前子组件的$parent指向传入的parent父组件实例
   vm.$parent = parent
   vm.$root = parent ? parent.$root : vm
 
@@ -64,6 +73,8 @@ export function lifecycleMixin (Vue: Class<Component>) {
     const prevEl = vm.$el
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
+    // 将之前render生成的渲染vnode赋值给_vnode
+    // 这里注意 $vnode中保存的是占位符vnode，即父级vnode
     vm._vnode = vnode
     // _update被调⽤的时机有 2 个，⼀个是⾸次渲染，⼀个是数据更新的时候
     // _update的核⼼就是调⽤ vm.__patch__ ⽅法
@@ -75,6 +86,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
       // vnode表⽰执⾏ _render 后返回的 VNode 的节点
       // hydrating表⽰是否是服务端渲染
       // removeOnly是给 transition-group ⽤的
+      // 子组件的参数vm.$el是不存在的，undefined；返回的结果是一个DOM
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates 数据更新的时候

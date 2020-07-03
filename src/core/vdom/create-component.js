@@ -44,10 +44,12 @@ const componentVNodeHooks = {
       const mountedNode: any = vnode // work around flow
       componentVNodeHooks.prepatch(mountedNode, mountedNode)
     } else {
+      // createComponentInstanceForVnode返回一个子组件的vm实例
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
         activeInstance
       )
+      // 子组件的$mount方法就是定义在src/platforms/web/entry-runtime-with-compiler.js中的Vue.prototype.$mount方法
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
@@ -210,6 +212,7 @@ export function createComponent (
   // 实例化vnode，需要注意下：组件的 vnode 是没有children的，componentOptions中有一个children
   // new VNode传入的参数tag,data,children,text,elm,context,componentOptions,asyncFactory
   // vue-component-这个是前缀标识
+  // { Ctor, propsData, listeners, tag, children }这个对象是componentOptions的值，后面有用到
   const name = Ctor.options.name || tag
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
@@ -230,13 +233,13 @@ export function createComponent (
 }
 
 export function createComponentInstanceForVnode (
-  vnode: any, // we know it's MountedComponentVNode but flow doesn't
+  vnode: any, // 组件VNode we know it's MountedComponentVNode but flow doesn't
   parent: any, // activeInstance in lifecycle state
 ): Component {
   const options: InternalComponentOptions = {
     _isComponent: true,
-    _parentVnode: vnode,
-    parent
+    _parentVnode: vnode, // 占位符vnode
+    parent // 当前vm的实例，也就是子组件的父级vm实例
   }
   // check inline-template render functions
   const inlineTemplate = vnode.data.inlineTemplate
@@ -244,6 +247,7 @@ export function createComponentInstanceForVnode (
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
+  // vnode.componentOptions.Ctor就是子类构造函数，就是extend方法中返回的sub构造函数
   return new vnode.componentOptions.Ctor(options)
 }
 

@@ -73,6 +73,7 @@ export function renderMixin (Vue: Class<Component>) {
   // 定义_render函数，最后返回一个vnode
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
+    // 这里拿到的_parentVnode时父VNode占位符
     const { render, _parentVnode } = vm.$options
 
     if (_parentVnode) {
@@ -85,6 +86,7 @@ export function renderMixin (Vue: Class<Component>) {
 
     // set parent vnode. this allows render functions to have access
     // to the data on the placeholder node.
+    // 将父占位符赋值给$vnode
     vm.$vnode = _parentVnode
     // render self
     let vnode
@@ -93,7 +95,7 @@ export function renderMixin (Vue: Class<Component>) {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm
-      // 调用render方法
+      // 调用render方法，生成一个渲染VNode
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
@@ -129,6 +131,7 @@ export function renderMixin (Vue: Class<Component>) {
       vnode = createEmptyVNode()
     }
     // set parent
+    // render生成的渲染vnode的parent指向占位符vnode，即父级vnode：_parentVnode
     vnode.parent = _parentVnode
     return vnode
   }

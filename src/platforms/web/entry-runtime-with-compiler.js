@@ -94,6 +94,9 @@ Vue.prototype.$mount = function (
     }
   }
   // 处理完模版调用第19行缓存的mount方法，即定义在原先原型上的mount方法
+  // 当render成组件VNode的方法调用Vue.prototype.$mount方法时，由于存在options.render，所以直接进入到调用原先原型上的mount方法
+  // 原先原型上的mount方法定义在src/platforms/web/runtime/index.js上，主要调用了mountComponent方法
+  // mountComponent方法定义在src/core/instance/lifecycle.js上
   return mount.call(this, el, hydrating)
 }
 

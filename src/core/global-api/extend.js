@@ -41,6 +41,7 @@ export function initExtend (Vue: GlobalAPI) {
 
     // 定义子构造器
     const Sub = function VueComponent (options) {
+      // 执行了this._init方法，即Vue._init方法，定义在src/core/instance/init.js中
       // 下面代码进行了原型继承，根据原型链，这里的_init方法就是Vue.prototype方法上的_init方法
       this._init(options)
     }
