@@ -249,7 +249,7 @@ export function createComponentInstanceForVnode (
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
   // vnode.componentOptions.Ctor就是子类构造函数，就是extend方法中返回的sub构造函数
-  // 这里相当于执行了子组件的构造函数
+  // 这里相当于执行了子组件的构造函数，将定义的options传入
   return new vnode.componentOptions.Ctor(options)
 }
 

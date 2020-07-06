@@ -83,11 +83,14 @@ export function initMixin (Vue: Class<Component>) {
   }
 }
 
+// 该函数只是做了简单一层对象赋值，并不涉及到递归、合并策略等复杂逻辑
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
   // 传入options= {_isComponent: true, _parentVnode: vnode, parent}
+  // 这里传入的vm是从extend函数中的Sub子构造函数中调用的this._init(options)
+  // 所以vm.constructor就是Sub，vm.$options = Sub.options
   const opts = vm.$options = Object.create(vm.constructor.options)
   // doing this because it's faster than dynamic enumeration.
-  const parentVnode = options._parentVnode // 占位符vnode
+  const parentVnode = options._parentVnode // 占位符vnode，子组件父VNode实例
   opts.parent = options.parent // 子组件的父级vm实例，当前vm的实例
   opts._parentVnode = parentVnode
 

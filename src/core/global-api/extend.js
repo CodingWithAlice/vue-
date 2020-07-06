@@ -50,6 +50,7 @@ export function initExtend (Vue: GlobalAPI) {
     // 子构造器再指向自身
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
+    // extendOptions是前面定义的组件对象
     // 自身的配置以及Vue.options做一层合并 
     Sub.options = mergeOptions(
       Super.options,
