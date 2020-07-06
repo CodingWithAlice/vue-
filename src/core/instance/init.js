@@ -40,7 +40,7 @@ export function initMixin (Vue: Class<Component>) {
     } else {
       // tag为String，普通vnode
       vm.$options = mergeOptions(
-        resolveConstructorOptions(vm.constructor),
+        resolveConstructorOptions(vm.constructor), // 这里返回的直接是Vue.options
         options || {},
         vm
       )
@@ -104,6 +104,7 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 }
 
 export function resolveConstructorOptions (Ctor: Class<Component>) {
+  // 如果不是子组件，那么传入的参数是Vue，Vue没有super，相当于这个函数直接返回的是Vue.options
   let options = Ctor.options
   if (Ctor.super) {
     const superOptions = resolveConstructorOptions(Ctor.super)

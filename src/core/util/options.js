@@ -142,18 +142,19 @@ strats.data = function (
 
 /**
  * Hooks and props are merged as arrays.
+ * 所有生命周期的合并策略都是一样的，最终返回一个数组
  */
 function mergeHook (
   parentVal: ?Array<Function>,
   childVal: ?Function | ?Array<Function>
 ): ?Array<Function> {
-  const res = childVal
-    ? parentVal
-      ? parentVal.concat(childVal)
+  const res = childVal  // 判断是否存在childVal
+    ? parentVal         // 存在childVal，判断是否存在parentVal
+      ? parentVal.concat(childVal)  // 存在parentVal，就把 childVal 添加到 parentVal 后返回新数组
       : Array.isArray(childVal)
         ? childVal
-        : [childVal]
-    : parentVal
+        : [childVal]                // 不存在parentVal，就返回 childVal 的数组
+    : parentVal         // 不存在childVal，就返回parentVal
   return res
     ? dedupeHooks(res)
     : res
@@ -169,6 +170,8 @@ function dedupeHooks (hooks) {
   return res
 }
 
+// 这里重点看一下生命周期函数的合并策略
+// LIFECYCLE_HOOKS =['beforeCreate','created','beforeMount','mounted','beforeUpdate','updated','beforeDestroy','destroyed','activated','deactivated','errorCaptured','serverPrefetch']
 LIFECYCLE_HOOKS.forEach(hook => {
   strats[hook] = mergeHook
 })
@@ -385,12 +388,14 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
 /**
  * Merge two option objects into a new one.
  * Core utility used in both instantiation and inheritance.
+ * 本质上是对传入的parent和child进行了参数的合并
  */
 export function mergeOptions (
   parent: Object,
   child: Object,
   vm?: Component
 ): Object {
+  // 参数定义的检测
   if (process.env.NODE_ENV !== 'production') {
     checkComponents(child)
   }
@@ -399,6 +404,7 @@ export function mergeOptions (
     child = child.options
   }
 
+  // 进行规范化
   normalizeProps(child, vm)
   normalizeInject(child, vm)
   normalizeDirectives(child)
@@ -408,9 +414,11 @@ export function mergeOptions (
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
   if (!child._base) {
+    // 如果存在extends，就进行递归
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
     }
+    // 如果存在mixin，就进行递归
     if (child.mixins) {
       for (let i = 0, l = child.mixins.length; i < l; i++) {
         parent = mergeOptions(parent, child.mixins[i], vm)
@@ -418,17 +426,20 @@ export function mergeOptions (
     }
   }
 
+  // 定义最终返回值 
   const options = {}
   let key
   for (key in parent) {
     mergeField(key)
   }
   for (key in child) {
+    // child中的key不在parent中的话
     if (!hasOwn(parent, key)) {
       mergeField(key)
     }
   }
   function mergeField (key) {
+    // 通过key拿到不同的strat函数，就是不同的合并策略
     const strat = strats[key] || defaultStrat
     options[key] = strat(parent[key], child[key], vm, key)
   }
