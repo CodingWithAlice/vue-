@@ -55,7 +55,7 @@ export function initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
-    // 初始化⽣命周期
+    // 找到父子关系
     initLifecycle(vm)  // 初始化$parent,$root,$refs,$children
     // 初始化事件中⼼
     initEvents(vm)     // 处理父组件传递的监听器
@@ -88,7 +88,7 @@ export function initInternalComponent (vm: Component, options: InternalComponent
   const opts = vm.$options = Object.create(vm.constructor.options)
   // doing this because it's faster than dynamic enumeration.
   const parentVnode = options._parentVnode // 占位符vnode
-  opts.parent = options.parent // 子组件的父级vm实例
+  opts.parent = options.parent // 子组件的父级vm实例，当前vm的实例
   opts._parentVnode = parentVnode
 
   const vnodeComponentOptions = parentVnode.componentOptions

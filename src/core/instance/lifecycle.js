@@ -35,6 +35,7 @@ export function setActiveInstance(vm: Component) {
 }
 
 // 建立父子组件的关系
+// 这里的vm代表的是传入的子组件，parent（从上一个函数中通过参数activeInstance传递进函数）代表父组件
 export function initLifecycle (vm: Component) {
   // 获取到输入选项，传入的vm是子组件的实例
   const options = vm.$options

@@ -241,6 +241,7 @@ export function createPatchFunction (backend) {
       if (isDef(vnode.componentInstance)) {
         // initComponent将vnode.elm进行了赋值
         initComponent(vnode, insertedVnodeQueue)
+        // 上面的init方法执行完，给vm.$el返回值后，vnode.elm有值了，要挂载的父节点有了之后
         // 子组件的插入是在执行到createComponent的insert的时候会进行插入
         // 插入顺序是先子后父
         insert(parentElm, vnode.elm, refElm)

@@ -50,6 +50,7 @@ const componentVNodeHooks = {
         activeInstance
       )
       // 子组件的$mount方法就是定义在src/platforms/web/entry-runtime-with-compiler.js中的Vue.prototype.$mount方法
+      // 子组件调用的时候hydrating参数被传递为false
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
@@ -248,6 +249,7 @@ export function createComponentInstanceForVnode (
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
   // vnode.componentOptions.Ctor就是子类构造函数，就是extend方法中返回的sub构造函数
+  // 这里相当于执行了子组件的构造函数
   return new vnode.componentOptions.Ctor(options)
 }
 
