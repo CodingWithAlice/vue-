@@ -56,16 +56,18 @@ export default class Watcher {
   ) {
     this.vm = vm
     if (isRenderWatcher) {
-      // 如果要渲染watcher，就是给实例添加一个_watcher
+      // 如果是渲染watcher，把当前的watcher实例赋值给vm._watcher
+      // vm._watcher存储的是渲染watcher
       vm._watcher = this
     }
-    vm._watchers.push(this)
+    vm._watchers.push(this) 
     // options-配置 
     if (options) {
       this.deep = !!options.deep
       this.user = !!options.user
       this.lazy = !!options.lazy
       this.sync = !!options.sync
+      // 保存了before函数
       this.before = options.before
     } else {
       this.deep = this.user = this.lazy = this.sync = false

@@ -121,14 +121,15 @@ export function lifecycleMixin (Vue: Class<Component>) {
     if (vm._isBeingDestroyed) {
       return
     }
+    // 调用了生命周期的钩子beforeDestroy，该销毁方法一开始就执行了这个钩子函数
     callHook(vm, 'beforeDestroy')
     vm._isBeingDestroyed = true
     // remove self from parent
     const parent = vm.$parent
     if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
-      remove(parent.$children, vm)
+      remove(parent.$children, vm) // 从parent的$children删掉自身
     }
-    // teardown watchers
+    // teardown watchers 删除watcher
     if (vm._watcher) {
       vm._watcher.teardown()
     }
@@ -144,8 +145,10 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // call the last hook...
     vm._isDestroyed = true
     // invoke destroy hooks on current rendered tree
+    // 触发子组件的销毁钩子函数，递归
     vm.__patch__(vm._vnode, null)
     // fire destroyed hook
+    // 调用了生命周期的钩子destroyed
     callHook(vm, 'destroyed')
     // turn off all instance listeners.
     vm.$off()
@@ -190,6 +193,7 @@ export function mountComponent (
       }
     }
   }
+  // 调用了生命周期的钩子beforeMount，在vm._render()前，即挂载前执行
   callHook(vm, 'beforeMount')
 
   // 定义了一个updateComponent方法，最终就是调用vm._render()、vm._update()方法
@@ -229,7 +233,8 @@ export function mountComponent (
   // new Watcher的两个作用：1、初始化时，执行回调函数；2、当vm中监测的数据发生变化时，执行回调函数；
   new Watcher(vm, updateComponent, noop, {
     before () {
-      if (vm._isMounted && !vm._isDestroyed) {
+      if (vm._isMounted && !vm._isDestroyed) { // 在组件已经mounted之后，才会去调用这个钩子函数
+        // 调用了生命周期的钩子beforeUpdate
         callHook(vm, 'beforeUpdate')
       }
     }
@@ -239,11 +244,12 @@ export function mountComponent (
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
-  //  vm.$vnode表⽰Vue实例的⽗虚拟Node，所以它为Null则表⽰当前是根Vue的实例
+  // vm.$vnode表⽰Vue实例的⽗VNode，所以它为Null则表⽰当前是根Vue的实例
+  // vm.$vnode 如果为 null ，则表明这不是⼀次组件的初始化过程，⽽是我们通过外部 new Vue 初始化过程
   if (vm.$vnode == null) {
     // 如果是根结点时，设置vm._isMounted为true，表示这个实例已经挂载了
     vm._isMounted = true
-    // 同时执行mounted钩子函数
+    // 调用了生命周期的钩子mounted，在执行完vm._update把VNode patch到真实DOM后，执行mounted
     callHook(vm, 'mounted')
   }
   return vm
@@ -370,13 +376,17 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
   }
 }
 
+// 生命周期的函数都是调用callHook方法
 export function callHook (vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()
+  // 根据传入的hook，拿到对应的回调函数数组，vm.$options是合并配置的结果
   const handlers = vm.$options[hook]
   const info = `${hook} hook`
+  // 然后遍历执行，执行时把vm作为上下文
   if (handlers) {
     for (let i = 0, j = handlers.length; i < j; i++) {
+      // 定义在src/core/util/error.js中，这里等价于执行handlers[i].call(vm)
       invokeWithErrorHandling(handlers[i], vm, null, vm, info)
     }
   }

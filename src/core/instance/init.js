@@ -61,11 +61,12 @@ export function initMixin (Vue: Class<Component>) {
     initEvents(vm)     // 处理父组件传递的监听器
     // 初始化渲染
     initRender(vm)     // $scopedSlots,$slots,_c(),$createElement()的声明
-    // 调用了生命周期的钩子
+    // 调用了生命周期的钩子beforeCreate，不能获取到props、data及methods中的方法
     callHook(vm, 'beforeCreate')
     initInjections(vm) // 获取注入数据，resolve injections before data/props
     initState(vm)      // 初始化组件中props、methods、data、computed、watch
     initProvide(vm)    // 提供数据，resolve provide after data/props
+    // 调用了生命周期的钩子created，可以访问到data，但不能访问到DOM，因为渲染在下方才调用
     callHook(vm, 'created')
 
     /* istanbul ignore if */

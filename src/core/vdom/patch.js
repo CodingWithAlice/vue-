@@ -254,6 +254,8 @@ export function createPatchFunction (backend) {
   }
 
   function initComponent (vnode, insertedVnodeQueue) {
+    // 在初始化、patch子组件完成后，执行了这个方法，会不断把当前子组件的VNode push到insertedVnodeQueue
+    // 先子后父得插入
     if (isDef(vnode.data.pendingInsert)) {
       insertedVnodeQueue.push.apply(insertedVnodeQueue, vnode.data.pendingInsert)
       vnode.data.pendingInsert = null
@@ -338,6 +340,7 @@ export function createPatchFunction (backend) {
     i = vnode.data.hook // Reuse variable
     if (isDef(i)) {
       if (isDef(i.create)) i.create(emptyNode, vnode)
+      // 在整个patch过程中insertedVnodeQueue在这里进行不停得插入
       if (isDef(i.insert)) insertedVnodeQueue.push(vnode)
     }
   }
@@ -603,6 +606,7 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // 作用是把insertedVnodeQueue中保存的钩子函数依次执行一遍
   function invokeInsertHook (vnode, queue, initial) {
     // delay insert hooks for component root nodes, invoke them after the
     // element is really inserted
@@ -610,6 +614,7 @@ export function createPatchFunction (backend) {
       vnode.parent.data.pendingInsert = queue
     } else {
       for (let i = 0; i < queue.length; ++i) {
+        // 遍历queue中的函数执行，insert方法定义在src/core/vdom/create-component.js
         queue[i].data.hook.insert(queue[i])
       }
     }
@@ -841,6 +846,7 @@ export function createPatchFunction (backend) {
       }
     }
 
+    // 在patch整个完成后调用该方法
     invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch)
     return vnode.elm
   }

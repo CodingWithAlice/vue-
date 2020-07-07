@@ -88,6 +88,7 @@ function flushSchedulerQueue () {
   for (index = 0; index < queue.length; index++) {
     watcher = queue[index]
     if (watcher.before) {
+      // 调用了生命周期的钩子beforeUpdate
       watcher.before()
     }
     id = watcher.id
@@ -111,7 +112,9 @@ function flushSchedulerQueue () {
   }
 
   // keep copies of post queues before resetting state
+  // slice(start,end) 方法可从已有的数组中返回选定的元素-->slice()返回整个数组
   const activatedQueue = activatedChildren.slice()
+  // updatedQueue也是不断添加的,queue的副本
   const updatedQueue = queue.slice()
 
   resetSchedulerState()
@@ -129,10 +132,13 @@ function flushSchedulerQueue () {
 
 function callUpdatedHooks (queue) {
   let i = queue.length
+  // 该方法用于遍历queue
   while (i--) {
     const watcher = queue[i]
     const vm = watcher.vm
+    // 当前watcher为vm._watcher，即渲染watcher，且组件已经mounted，才会执行updated
     if (vm._watcher === watcher && vm._isMounted && !vm._isDestroyed) {
+      // 调用了生命周期的钩子updated
       callHook(vm, 'updated')
     }
   }

@@ -69,8 +69,10 @@ const componentVNodeHooks = {
 
   insert (vnode: MountedComponentVNode) {
     const { context, componentInstance } = vnode
+    // 首次渲染的时候会执行到mounted，同时给一个标识
     if (!componentInstance._isMounted) {
       componentInstance._isMounted = true
+      // 调用了生命周期的钩子mounted，这是组件mount ed方法的触发点
       callHook(componentInstance, 'mounted')
     }
     if (vnode.data.keepAlive) {
