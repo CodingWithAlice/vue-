@@ -50,11 +50,10 @@ export function initExtend (Vue: GlobalAPI) {
     // 子构造器再指向自身
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
-    // extendOptions是前面定义的组件对象
-    // 自身的配置以及Vue.options做一层合并 
+    // 局部注册的时候，先将Vue.options和自定义组件的参数合并到Sub.options
     Sub.options = mergeOptions(
-      Super.options,
-      extendOptions
+      Super.options, // Vue.options
+      extendOptions  // 自定义组件的参数
     )
     // 将super key指向Vue
     Sub['super'] = Super

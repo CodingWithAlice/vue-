@@ -125,6 +125,7 @@ export function _createElement (
         undefined, undefined, context
       )
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
+      // 在创建组件VNode时，局部注册的组件options也可以在vm.$options被取到
       // Ctor就是vm.$options.components[tag]拿到的构造函数
       // component：如果是已注册的组件名，通过createComponent创建一个组件类型的VNode
       vnode = createComponent(Ctor, data, context, children, tag)

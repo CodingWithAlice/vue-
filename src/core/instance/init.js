@@ -36,6 +36,7 @@ export function initMixin (Vue: Class<Component>) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
+      // 执行_init方法的时候，自定义组件也是执行到这儿
       initInternalComponent(vm, options)
     } else {
       // tag为String，普通vnode
@@ -89,6 +90,7 @@ export function initInternalComponent (vm: Component, options: InternalComponent
   // 传入options= {_isComponent: true, _parentVnode: vnode, parent}
   // 这里传入的vm是从extend函数中的Sub子构造函数中调用的this._init(options)
   // 所以vm.constructor就是Sub，vm.$options = Sub.options
+  // 这里 vm.$options 保存了Sub.options中传递过来的自定义组件的options
   const opts = vm.$options = Object.create(vm.constructor.options)
   // doing this because it's faster than dynamic enumeration.
   const parentVnode = options._parentVnode // 占位符vnode，子组件父VNode实例
