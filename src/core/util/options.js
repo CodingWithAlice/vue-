@@ -450,6 +450,7 @@ export function mergeOptions (
  * Resolve an asset.
  * This function is used because child instances need access
  * to assets defined in its ancestor chain.
+ * resolveAsset(vm.$options, 'components', tag)
  */
 export function resolveAsset (
   options: Object,
@@ -461,8 +462,10 @@ export function resolveAsset (
   if (typeof id !== 'string') {
     return
   }
+  // 拿到的其实就是vm.$options.components[tag]
   const assets = options[type]
   // check local registration variations first
+  // 先直接用id拿；不存在的话把id变成驼峰拿；再不存在把id驼峰后首字母大写拿；再不存在则报错
   if (hasOwn(assets, id)) return assets[id]
   const camelizedId = camelize(id)
   if (hasOwn(assets, camelizedId)) return assets[camelizedId]
