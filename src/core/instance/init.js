@@ -89,7 +89,8 @@ export function initMixin (Vue: Class<Component>) {
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
   // 传入options= {_isComponent: true, _parentVnode: vnode, parent}
   // 这里传入的vm是从extend函数中的Sub子构造函数中调用的this._init(options)
-  // 所以vm.constructor就是Sub，vm.$options = Sub.options
+  // 所以vm.constructor就是Sub，vm.$options = Sub.options = vm.constructor.options
+  // 通过 Object.create将注册了的组件构造器保存在vm.$options的原型中
   // 这里 vm.$options 保存了Sub.options中传递过来的自定义组件的options
   const opts = vm.$options = Object.create(vm.constructor.options)
   // doing this because it's faster than dynamic enumeration.

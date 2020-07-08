@@ -132,6 +132,8 @@ export function createComponent (
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
+  // 组件注册的时候，Ctor是通过resolveAsset方法拿到的原型上的构造器
+  // 不满足这里的isObject，不会执行这里的extend，因为已经在Vue.component里面执行过extend了
   if (isObject(Ctor)) {
     // baseCtor.extend方法即Vue.extend，定义在src/core/global-api/extend.js中
     // 如果传入的Ctor是个对象的话，会把Ctor转换成一个新的构造器

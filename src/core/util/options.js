@@ -189,6 +189,7 @@ function mergeAssets (
   vm?: Component,
   key: string
 ): Object {
+  // 合并配置的时候，对于不同的合并策略，会通过Object.create保存到res的原型上
   const res = Object.create(parentVal || null)
   if (childVal) {
     process.env.NODE_ENV !== 'production' && assertObjectType(key, childVal, vm)
@@ -197,7 +198,7 @@ function mergeAssets (
     return res
   }
 }
-
+// 合并的时候对静态类型做了单独处理
 ASSET_TYPES.forEach(function (type) {
   strats[type + 's'] = mergeAssets
 })
@@ -472,6 +473,7 @@ export function resolveAsset (
   const PascalCaseId = capitalize(camelizedId)
   if (hasOwn(assets, PascalCaseId)) return assets[PascalCaseId]
   // fallback to prototype chain
+  // 这里是从原型上去查找
   const res = assets[id] || assets[camelizedId] || assets[PascalCaseId]
   if (process.env.NODE_ENV !== 'production' && warnMissing && !res) {
     warn(
