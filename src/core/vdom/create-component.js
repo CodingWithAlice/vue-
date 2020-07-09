@@ -150,14 +150,18 @@ export function createComponent (
   }
 
   // async component 异步组件的处理
+  // 异步组件-工厂函数：Ctor不是一个对象，不会执行Ctor = baseCtor.extend(Ctor)，也就不会有cid
   let asyncFactory
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
+    // 异步组件-工厂函数：asyncFactory = 工厂函数；baseCtor = Vue
     Ctor = resolveAsyncComponent(asyncFactory, baseCtor)
+    // 异步组件-工厂函数：Ctor = 返回值undefined；
+    // 异步组件-工厂函数：resolveAsyncComponent中异步加载完成后，进行了强制重新渲染，再次进入到该方法时候，Ctor = 返回的异步组件构造器，相当于正确解析了，接下来就可以正确进行后续的installComponentHooks和new VNode，生成VNode，进行patch
     if (Ctor === undefined) {
-      // return a placeholder node for async component, which is rendered
-      // as a comment node but preserves all the raw information for the node.
+      // return a placeholder node for async component, which is rendered as a comment node but preserves all the raw information for the node.
       // the information will be used for async server-rendering and hydration.
+      // 异步组件-工厂函数：执行到这个方法定义在src/core/vdom/helpers/resolve-async-component.js，作用是返回一个空的注释节点VNode，然后render结束，开始进行_update
       return createAsyncPlaceholder(
         asyncFactory,
         data,

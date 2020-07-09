@@ -21,6 +21,7 @@ export function initAssetRegisters (Vue: GlobalAPI) {
         if (process.env.NODE_ENV !== 'production' && type === 'component') {
           validateComponentName(id)
         }
+        // 异步组件中，definition 是一个工厂函数，所以不会进入extend的构造函数转换，而是直接赋值给了 Vue.options.component 
         // definition是一个对象的话，通过this.options._base.extend = Vue.extend将这个对象转换成一个继承于Vue的构造函数
         if (type === 'component' && isPlainObject(definition)) {
           definition.name = definition.name || id

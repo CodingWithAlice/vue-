@@ -128,6 +128,7 @@ export function _createElement (
       // 在创建组件VNode时，局部注册的组件options也可以在vm.$options被取到
       // Ctor就是vm.$options.components[tag]拿到的构造函数
       // component：如果是已注册的组件名，通过createComponent创建一个组件类型的VNode
+      // 异步组件--工厂函数：在创建组件VNode时，即render的时候，resolveAsset仍可以拿到Ctor，这里的Ctor就是注册的时候的工厂函数
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements

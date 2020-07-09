@@ -109,9 +109,11 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // updated in a parent's updated hook.
   }
 
+  // 异步组件-工厂函数：异步加载完工厂函数后会执行resolve方法进入到此函数
   Vue.prototype.$forceUpdate = function () {
     const vm: Component = this
     if (vm._watcher) {
+      // 调用渲染watcher的update，最终会执行到vm._update(vm._render(), hydrating)，相当于强制重新渲染一次
       vm._watcher.update()
     }
   }
