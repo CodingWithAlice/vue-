@@ -128,12 +128,15 @@ export function resolveAsyncComponent (
     })
 
     // 异步组件-工厂函数：工厂方法就会执行 webpack 的 require 去加载，异步加载
+    // 异步组件-Promise：执行箭头函数，执行import方法，返回的res是一个Promise
     const res = factory(resolve, reject)
 
+    // 异步函数-Promise：执行factory后会返回Promise对象，进到这里的逻辑
     if (isObject(res)) {
       if (isPromise(res)) {
         // () => Promise
         if (isUndef(factory.resolved)) {
+          // 第一次执行的时候，没有定义，就会执行.then函数【异步】，下方代码同步加载完了之后，执行resolve，触发forceRender
           res.then(resolve, reject)
         }
       } else if (isPromise(res.component)) {
@@ -176,6 +179,7 @@ export function resolveAsyncComponent (
     sync = false
     // return in case resolved synchronously
     // 异步组件-工厂函数：没有这些属性，所以return的是undefined
+    // 异步组件-Promise：没有这些属性，所以return的是undefined
     return factory.loading
       ? factory.loadingComp
       : factory.resolved

@@ -162,6 +162,7 @@ export function createComponent (
       // return a placeholder node for async component, which is rendered as a comment node but preserves all the raw information for the node.
       // the information will be used for async server-rendering and hydration.
       // 异步组件-工厂函数：执行到这个方法定义在src/core/vdom/helpers/resolve-async-component.js，作用是返回一个空的注释节点VNode，然后render结束，开始进行_update
+      // 异步组件-Promise：执行到这个方法，返回一个空的注释节点VNode，然后render结束，开始进行_update
       return createAsyncPlaceholder(
         asyncFactory,
         data,
