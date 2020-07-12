@@ -48,6 +48,7 @@ export function resolveAsyncComponent (
   factory: Function,
   baseCtor: Class<Component>
 ): Class<Component> | void {
+  // 异步组件-高级异步组件：超过timeout的时候，触发重新渲染，执行到这里，返回对应的errorComp，渲染error组件
   if (isTrue(factory.error) && isDef(factory.errorComp)) {
     return factory.errorComp
   }
@@ -66,6 +67,7 @@ export function resolveAsyncComponent (
     factory.owners.push(owner)
   }
 
+  // 异步组件-高级异步组件：还没resolve，但是delay时间已经到了，触发了重新渲染，就会执行到这里，返回loadingComp进行loading组件的渲染
   if (isTrue(factory.loading) && isDef(factory.loadingComp)) {
     return factory.loadingComp
   }
@@ -117,10 +119,12 @@ export function resolveAsyncComponent (
     })
 
     const reject = once(reason => {
+      // 异步组件-高级异步组件：发出警告
       process.env.NODE_ENV !== 'production' && warn(
         `Failed to resolve async component: ${String(factory)}` +
         (reason ? `\nReason: ${reason}` : '')
       )
+      // 异步组件-高级异步组件：如果定义了error组件，就设置标志位，触发重新渲染，返回error组件进行渲染
       if (isDef(factory.errorComp)) {
         factory.error = true
         forceRender(true)
@@ -129,6 +133,7 @@ export function resolveAsyncComponent (
 
     // 异步组件-工厂函数：工厂方法就会执行 webpack 的 require 去加载，异步加载
     // 异步组件-Promise：执行箭头函数，执行import方法，返回的res是一个Promise
+    // 异步组件-高级异步组件：返回值是定义的组件对象
     const res = factory(resolve, reject)
 
     // 异步函数-Promise：执行factory后会返回Promise对象，进到这里的逻辑
@@ -140,20 +145,26 @@ export function resolveAsyncComponent (
           res.then(resolve, reject)
         }
       } else if (isPromise(res.component)) {
+        // 异步组件-高级异步组件：进入到这里的异步调用，先执行完下面的同步代码，异步执行then方法
         res.component.then(resolve, reject)
 
         if (isDef(res.error)) {
+          // 异步组件-高级异步组件：如果配置中有error组件就在factory.errorComp上进行扩展
+          // ensureCtor方法确保errorComp存储的是一个构造器
           factory.errorComp = ensureCtor(res.error, baseCtor)
         }
 
         if (isDef(res.loading)) {
           factory.loadingComp = ensureCtor(res.loading, baseCtor)
           if (res.delay === 0) {
+            // 异步组件-高级异步组件：resolveAsyncComponent的返回值由factory.loading这个标志确定
             factory.loading = true
           } else {
+            // 异步组件-高级异步组件：setTimeout异步方法，resolveAsyncComponent方法在第一次执行的时候，返回的还是undefined，触发2次执行
             timerLoading = setTimeout(() => {
               timerLoading = null
               if (isUndef(factory.resolved) && isUndef(factory.error)) {
+                // 异步组件-高级异步组件：设置标志位，强制重新渲染一次，返回loadingComp，渲染loading组件
                 factory.loading = true
                 forceRender(false)
               }
@@ -165,6 +176,7 @@ export function resolveAsyncComponent (
           timerTimeout = setTimeout(() => {
             timerTimeout = null
             if (isUndef(factory.resolved)) {
+              // 异步组件-高级异步组件：超过最长等待时间，直接调用reject
               reject(
                 process.env.NODE_ENV !== 'production'
                   ? `timeout (${res.timeout}ms)`
@@ -180,6 +192,7 @@ export function resolveAsyncComponent (
     // return in case resolved synchronously
     // 异步组件-工厂函数：没有这些属性，所以return的是undefined
     // 异步组件-Promise：没有这些属性，所以return的是undefined
+    // 异步组件-高级异步组件：第一次渲染的时候，如果定义了delay === 0，就会直接返回loadingComp进行渲染
     return factory.loading
       ? factory.loadingComp
       : factory.resolved
