@@ -49,6 +49,7 @@ export class Observer {
     this.vmCount = 0
     // def方法定义在src/core/util/lang.js
     // 把自身实例添加到数据对象 value 的 __ob__ 属性上
+    // def 方法保证了 value 的 __ob__ 属性是一个不可枚举的属性，在下方 this.walk 遍历添加响应式的时候可以避免
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       // 如果是数组的话
