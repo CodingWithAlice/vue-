@@ -19,8 +19,9 @@ import {
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
 
 /**
- * In some cases we may want to disable observation inside a component's
- * update computation.
+ * In some cases we may want to disable observation inside a component's update computation.
+ * shouldObserve作为一个标志位，默认为true，当外部 调用 toggleObserving 方法，可以任意改变标志位的值
+ * true：可以观测；false 不可以观测
  */
 export let shouldObserve: boolean = true
 
@@ -34,27 +35,32 @@ export function toggleObserving (value: boolean) {
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
  */
-// 如果是对象，就会有一个observer实例与之对应
 export class Observer {
   value: any;
   dep: Dep;
   vmCount: number; // number of vms that have this object as root $data
 
+  // new Observer 的时候会执行这个构造函数
   constructor (value: any) {
+    // 保留传入的value
     this.value = value
+    // 实例化一个dep对象
     this.dep = new Dep()
     this.vmCount = 0
+    // def方法定义在src/core/util/lang.js
+    // 把自身实例添加到数据对象 value 的 __ob__ 属性上
     def(value, '__ob__', this)
-    // 当前对象是否是数组
     if (Array.isArray(value)) {
+      // 如果是数组的话
       if (hasProto) {
         protoAugment(value, arrayMethods)
       } else {
         copyAugment(value, arrayMethods, arrayKeys)
       }
+      // 遍历数组中的每一项，再次调用 observe(items[i])
       this.observeArray(value)
     } else {
-      // 如果是普通对象
+      // 如果是普通对象，遍历 value 中的 key ，进行 defineReactive 的调用（添加getter和setter）
       this.walk(value)
     }
   }
@@ -109,24 +115,34 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
 /**
  * Attempt to create an observer instance for a value,
  * 核心的目标是，返回一个observer对象的实例
+ * 两个参数：value：任意类型；asRootData：是不是根数据
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
 export function observe (value: any, asRootData: ?boolean): Observer | void {
+  // initState-->initData-->传入observe(data, true)
   if (!isObject(value) || value instanceof VNode) {
+    // 被观测的对象一定要求是一个对象，且不能是个VNode实例
     return
   }
   let ob: Observer | void
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
-    ob = value.__ob__ // 如果本身已经有了observer的实例，保存在这里：value.__ob__，就会直接赋值返回
+    ob = value.__ob__ 
+    // 如果本身已经有了__ob__属性，就证明已经有了 observer 的实例，就会直接返回__ob__
   } else if (
+    // 没有 observer 实例
+    // shouldObserve是一个标志位，true能观测；false不能观测
     shouldObserve &&
+    // 不是在isServerRendering的时机
     !isServerRendering() &&
+    // 传入的被观测的value应该不是一个数组，就是一个对象
     (Array.isArray(value) || isPlainObject(value)) &&
+    // 同时要求传入的value是可以扩展属性的
     Object.isExtensible(value) &&
+    // 还要确定不是vue实例，vue实例的_isVue为true
     !value._isVue
   ) {
-    // 如果没有，调用observer的构造函数
+    // 调用 observer 的 Class
     ob = new Observer(value)
   }
   if (asRootData && ob) {
@@ -138,6 +154,8 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 /**
  * Define a reactive property on an Object.
  * 核心作用：给data中每一个key定义数据劫持
+ * 即：定义一个响应式对象，给对象动态添加 getter 和 setter
+ * 上一层级调用：defineReactive(obj, keys[i])
  */
 export function defineReactive (
   obj: Object,
@@ -146,8 +164,10 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+  // 初始化 Dep 对象的实例
   const dep = new Dep()
 
+  // 拿到 obj 的属性描述符
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return
@@ -163,7 +183,7 @@ export function defineReactive (
   // 递归：如果这个val的值还是一个对象，那么接下来就要开始递归了
   // 这里返回的childOb，是对象情况下的一个observer实例
   let childOb = !shallow && observe(val)
-  // 定义数据拦截
+  // 定义数据拦截，即给 obj 的 key 属性添加添加 getter 和 setter
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,

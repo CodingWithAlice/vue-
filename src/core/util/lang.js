@@ -17,10 +17,13 @@ export function isReserved (str: string): boolean {
 
 /**
  * Define a property.
+ * 封装了Object.defineProperty
+ * 上一层级调用：def(value, '__ob__', this)
  */
 export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
   Object.defineProperty(obj, key, {
     value: val,
+    //可枚举的属性，如果没有传入的话，默认是false
     enumerable: !!enumerable,
     writable: true,
     configurable: true

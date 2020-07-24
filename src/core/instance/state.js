@@ -66,17 +66,21 @@ export function initState (vm: Component) {
   }
 }
 
+// 重点
 function initProps (vm: Component, propsOptions: Object) {
+  // 拿到options中的props的定义
   const propsData = vm.$options.propsData || {}
   const props = vm._props = {}
-  // cache prop keys so that future props updates can iterate using Array
-  // instead of dynamic object key enumeration.
+  // cache prop keys so that future props updates can iterate using Array instead of dynamic object key enumeration.
   const keys = vm.$options._propKeys = []
   const isRoot = !vm.$parent
   // root instance props should be converted
   if (!isRoot) {
+    // 该方法定义在 src/core/observer 中，作为改变是否能够观测的标志位的方法
+    // 这里将标志位设置为fasle，如果存在vm.$parent，即不是根实例上的数据，就不进行观测
     toggleObserving(false)
   }
+  // 遍历propsOptions进行校验（自定义的props配置）
   for (const key in propsOptions) {
     keys.push(key)
     const value = validateProp(key, propsOptions, propsData, vm)
@@ -102,6 +106,7 @@ function initProps (vm: Component, propsOptions: Object) {
         }
       })
     } else {
+      // 重点方法：遍历时，调⽤ defineReactive ⽅法把每个 props 对应的 key 变成响应式的
       defineReactive(props, key, value)
     }
     // static props are already proxied on the component's prototype
@@ -114,14 +119,15 @@ function initProps (vm: Component, propsOptions: Object) {
   toggleObserving(true)
 }
 
+// 重点
 function initData (vm: Component) {
-  // 从我们定义的vm.$options.data中获取对象
+  // 从定义的 vm.$options 中获取data
   let data = vm.$options.data
-  // 这里对vm._data进行了赋值
+  // 对vm._data进行了赋值
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
-  // 如果data不是一个函数的话，开发环境下会报一个警报
+  // 如果data不是一个函数的话，开发环境下会报一个警报；
   if (!isPlainObject(data)) {
     data = {}
     process.env.NODE_ENV !== 'production' && warn(
@@ -135,8 +141,8 @@ function initData (vm: Component) {
   const props = vm.$options.props
   const methods = vm.$options.methods
   let i = keys.length
-  // 这里拿到data、props、methods里面的key，进行遍历避免重复
-  // 由于三者最后都会以key挂载到vm/this的实例上
+  // 这里拿到data、props、methods里面的key，进行遍历避免与其他重复
+  // 原因：三者最后都会以 key 挂载到 vm/this 的实例上
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
@@ -154,11 +160,12 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
-      // 避免了重复后，使用proxy方法进行代理
+      // 使用 proxy 方法进行代理，将 data 中的内容 key 代理到 vm 实例上
       proxy(vm, `_data`, key)
     }
   }
-  // observe data 这个方法就是：数据遍历的开始，核心作用是 判断数据对象的类型，做响应的处理
+  // observe 方法：数据遍历的开始，核心作用是 判断数据对象的类型，做响应的处理
+  // 定义在 src/core/observer 中
   observe(data, true /* asRootData */)
 }
 
