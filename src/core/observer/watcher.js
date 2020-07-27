@@ -134,7 +134,7 @@ export default class Watcher {
       }
       // 将watcher pop出targetStack数组，恢复上一次正在进行计算的watcher
       popTarget()
-      // 为什么还需要cleanupDeps？
+      // 为什么还需要cleanupDeps？-- 避免页面中数据已经不再使用了，但是代码修改还会触发重新渲染，浪费性能
       this.cleanupDeps()
     }
     return value
@@ -162,8 +162,11 @@ export default class Watcher {
    * Clean up for dependency collection.
    * 清除一些依赖收集
    * 为什么？--数据改变，每次触发重新渲染-->重新render-->重新addDep
+   * 作用：把所有的 dep 做一次比对，只要新的一轮渲染中，没有对应订阅的 watcher ，就把旧的 watcher订阅 移除了，避免页面中数据已经不再使用了，但是代码修改还会触发重新渲染，浪费性能
+   *  newDepIds 和 newDeps 每次都会在addDep新增，上面的判断只能保证不会重复添加旧的
    */
   cleanupDeps () {
+    // 把 deps 清空
     let i = this.deps.length
     while (i--) {
       const dep = this.deps[i]
@@ -171,13 +174,17 @@ export default class Watcher {
         dep.removeSub(this)
       }
     }
+    // 交换 depIds 和 newDepIds
     let tmp = this.depIds
     this.depIds = this.newDepIds
     this.newDepIds = tmp
+    // 清空 newDepIds
     this.newDepIds.clear()
+    // 交换 deps 和 newDeps
     tmp = this.deps
     this.deps = this.newDeps
     this.newDeps = tmp
+    // 清空 newDeps
     this.newDeps.length = 0
   }
 
