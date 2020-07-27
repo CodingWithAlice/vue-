@@ -19,9 +19,9 @@ import type { SimpleSet } from '../util/index'
 let uid = 0
 
 /**
- * A watcher parses an expression, collects dependencies,
- * and fires callback when the expression value changes.
+ * A watcher parses an expression, collects dependencies,and fires callback when the expression value changes.
  * This is used for both the $watch() api and directives.
+ * Watcher 是一个 Class，在它的构造函数中，定义了一些和 Dep 相关的属性
  */
 export default class Watcher {
   vm: Component;
@@ -34,6 +34,7 @@ export default class Watcher {
   sync: boolean;
   dirty: boolean;
   active: boolean;
+  // 定义了一些和 Dep 相关的属性
   deps: Array<Dep>;
   newDeps: Array<Dep>;
   depIds: SimpleSet;
@@ -76,16 +77,16 @@ export default class Watcher {
     this.id = ++uid // uid for batching
     this.active = true
     this.dirty = this.lazy // for lazy watchers
-    this.deps = []
-    this.newDeps = []
-    this.depIds = new Set()
-    this.newDepIds = new Set()
+    this.deps = [] // 表示 Watcher 实例持有的 Dep 实例的数组
+    this.newDeps = [] // 表示 Watcher 实例持有的 Dep 实例的数组
+    this.depIds = new Set() // 代表 this.deps 的 id Set
+    this.newDepIds = new Set() //代表 this.newDeps 的 id Set
     this.expression = process.env.NODE_ENV !== 'production'
       ? expOrFn.toString()
       : ''
-    // parse expression for getter
+    // parse expression for getter，如果传入的第二个参数是一个函数，渲染Watcher下，就是updateComponent
     if (typeof expOrFn === 'function') {
-      // 如果expOrFn是函数的话，直接给getter
+      // 如果expOrFn是函数的话，直接赋值给Watcher的getter
       this.getter = expOrFn
     } else {
       // 如果是个表达式的话，要转换成为一个函数
@@ -100,7 +101,7 @@ export default class Watcher {
         )
       }
     }
-    // 一旦创建了一个watcher，就会调用一下get()方法，用于依赖收集
+    // 如果是在渲染watcher情况下，就会执行get()方法求值，用于依赖收集
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -111,12 +112,13 @@ export default class Watcher {
    * 用于依赖收集
    */
   get () {
-    // 设置Dep.target
+    // 设置Dep.target，定义在src/core/observer/dep.js中，保存当前正在计算的Watcher
     pushTarget(this)
     let value
     const vm = this.vm
     try {
-      // 触发依赖收集，这个getter就是上面传入的expOrFun函数
+      // 触发依赖收集，这个getter就是上面传入的expOrFun函数，就是updateComponent
+      // updateComponent-->执行vm._render()-->执行vnode = render.call()就会访问到定义在模版中的数据-->就会访问到这些数据的getter
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -130,7 +132,9 @@ export default class Watcher {
       if (this.deep) {
         traverse(value)
       }
+      // 将watcher pop出targetStack数组，恢复上一次正在进行计算的watcher
       popTarget()
+      // 为什么还需要cleanupDeps？
       this.cleanupDeps()
     }
     return value
@@ -141,10 +145,14 @@ export default class Watcher {
    */
   addDep (dep: Dep) {
     const id = dep.id
+    // 判断newDepIds是否有该id
     if (!this.newDepIds.has(id)) {
-      this.newDepIds.add(id)
-      this.newDeps.push(dep)
+      this.newDepIds.add(id) // 添加id
+      this.newDeps.push(dep) // push进数组
+      // 如果depIds也没有的话
       if (!this.depIds.has(id)) {
+        // 定义在src/core/observer/dep.js
+        // 将当前渲染Watcher push进this.subs
         dep.addSub(this)
       }
     }
@@ -152,6 +160,8 @@ export default class Watcher {
 
   /**
    * Clean up for dependency collection.
+   * 清除一些依赖收集
+   * 为什么？--数据改变，每次触发重新渲染-->重新render-->重新addDep
    */
   cleanupDeps () {
     let i = this.deps.length

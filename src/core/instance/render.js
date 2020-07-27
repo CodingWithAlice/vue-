@@ -96,6 +96,7 @@ export function renderMixin (Vue: Class<Component>) {
       // when parent component is patched.
       currentRenderingInstance = vm
       // 调用render方法，生成一个渲染VNode
+      // 会访问到定义在模版中的数据-->访问到这些数据的getter
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)

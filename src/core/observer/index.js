@@ -165,7 +165,7 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
-  // 初始化 Dep 对象的实例
+  // 初始化 Dep 对象的实例，用于依赖收集
   const dep = new Dep()
 
   // 拿到 obj 的属性描述符
@@ -188,13 +188,15 @@ export function defineReactive (
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
+    // 依赖收集
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       // 依赖收集
-      if (Dep.target) {
-        dep.depend() // 追加依赖关系
-        // 如果存在子observer
+      if (Dep.target) { // 存在正在进行计算的 Watcher -- 当前的渲染Watcher
+        dep.depend() // 追加依赖关系，进行依赖收集
+        // 如果存在子observer-->只有在 value 是对象 childOb 才不是 undefined
         if (childOb) {
+          // ？？？有什么作用
           childOb.dep.depend()
           // 还要注意如果是数组，还要继续处理
           if (Array.isArray(value)) {
@@ -204,6 +206,7 @@ export function defineReactive (
       }
       return value
     },
+    // 派发更新
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
