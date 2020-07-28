@@ -194,11 +194,14 @@ export default class Watcher {
    */
   update () {
     /* istanbul ignore else */
+    // 对于 Watcher 的不同状态，会执行不同的逻辑
     if (this.lazy) {
       this.dirty = true
     } else if (this.sync) {
       this.run()
     } else {
+      // 在一般组件数据更新的场景，会走到这里
+      // 方法定义在src/core/observer/scheduler.js
       queueWatcher(this)
     }
   }
@@ -209,15 +212,16 @@ export default class Watcher {
    */
   run () {
     if (this.active) {
+      // 触发组件重新渲染的原因：
+      // 先通过 get 方法获得当前的值（新值）-->会触发 value = this.getter.call(vm, vm) --> 即回调函数 updareComponent
       const value = this.get()
       if (
         value !== this.value ||
-        // Deep watchers and watchers on Object/Arrays should fire even
-        // when the value is the same, because the value may
-        // have mutated.
+        // Deep watchers and watchers on Object/Arrays should fire even when the value is the same, because the value may have mutated.
         isObject(value) ||
         this.deep
       ) {
+        // 如果新旧值不等/新值是对象类型/deep模式
         // set new value
         const oldValue = this.value
         this.value = value
@@ -228,6 +232,7 @@ export default class Watcher {
             handleError(e, this.vm, `callback for watcher "${this.expression}"`)
           }
         } else {
+          // 执行回调函数，传入新/旧两个值
           this.cb.call(this.vm, value, oldValue)
         }
       }

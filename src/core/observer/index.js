@@ -206,10 +206,12 @@ export function defineReactive (
       }
       return value
     },
-    // 派发更新
+    // 派发更新 
     set: function reactiveSetter (newVal) {
+      // 求值
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
+      // 新旧值相同时什么都不做 
       if (newVal === value || (newVal !== newVal && value !== value)) {
         return
       }
@@ -224,8 +226,9 @@ export function defineReactive (
       } else {
         val = newVal
       }
-      // 额外判断，如果用户设置的值是对象，那么需要额外的响应化处理
+      // 关键点1，如果用户设置的新值是对象，那么会把 newVal 变成响应式对象
       childOb = !shallow && observe(newVal)
+      // 关键点2，通知所有的订阅者，方法定义在 src/core/observer/dep.js
       dep.notify()
     }
   })

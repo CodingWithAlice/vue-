@@ -48,7 +48,7 @@ export default class Dep {
 
   notify () {
     // stabilize the subscriber list first
-    // 这里的slice()就是获取this.subs这个数组里面，所有的依赖
+    // 这里的 slice() 就是获取 this.subs 这个数组里面，所有的依赖
     const subs = this.subs.slice()
     if (process.env.NODE_ENV !== 'production' && !config.async) {
       // subs aren't sorted in scheduler if not running async
@@ -56,7 +56,9 @@ export default class Dep {
       // order
       subs.sort((a, b) => a.id - b.id)
     }
+    // 遍历所有的 subs ，即遍历所有订阅该数据变化的 watcher 的实例数组
     for (let i = 0, l = subs.length; i < l; i++) {
+      // 方法定义在 src/core/observer/watcher.js 
       subs[i].update()
     }
   }
