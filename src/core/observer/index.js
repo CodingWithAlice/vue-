@@ -208,7 +208,7 @@ export function defineReactive (
     },
     // 派发更新 
     set: function reactiveSetter (newVal) {
-      // 求值
+      // 拿到当前的值，作为旧值，和传入的新值进行比较处理
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
       // 新旧值相同时什么都不做 
