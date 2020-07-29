@@ -199,6 +199,7 @@ export function queueWatcher (watcher: Watcher) {
       }
       // 在下一个 tick，也就是异步的去执行
       // flushSchedulerQueue 定义在当前页面，用于遍历队列
+      // 调用的地方1:
       nextTick(flushSchedulerQueue)
     }
   }

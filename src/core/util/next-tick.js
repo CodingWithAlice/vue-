@@ -39,7 +39,9 @@ let timerFunc
 // completely stops working after triggering a few times... so, if native
 // Promise is available, we will use it:
 /* istanbul ignore next, $flow-disable-line */
+// 根据浏览器对的不同支持，进行 timerFunc 的定义
 if (typeof Promise !== 'undefined' && isNative(Promise)) {
+  // 有先判断，原生是否支持 Promise 
   const p = Promise.resolve()
   timerFunc = () => {
     p.then(flushCallbacks)
@@ -52,6 +54,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
   }
   isUsingMicroTask = true
 } else if (!isIE && typeof MutationObserver !== 'undefined' && (
+// 原生是否支持 MutationObserver
   isNative(MutationObserver) ||
   // PhantomJS and iOS 7.x
   MutationObserver.toString() === '[object MutationObserverConstructor]'
@@ -71,6 +74,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
   }
   isUsingMicroTask = true
 } else if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
+  // 原生是否支持 setImmediate，这是一个高版本 IE 和 Edge 才支持的特性
   // Fallback to setImmediate.
   // Technically it leverages the (macro) task queue,
   // but it is still a better choice than setTimeout.
@@ -78,14 +82,19 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     setImmediate(flushCallbacks)
   }
 } else {
+  // 都不支持的话，降级为 setTimeout
   // Fallback to setTimeout.
   timerFunc = () => {
     setTimeout(flushCallbacks, 0)
   }
 }
 
+// 不论在当前 tick 同步代码执行过程中执行多少次 nextTick ，会把所有回调 push 到 callbacks 数组中，直到下一个 tick 遍历数组执行
+// 调用 nextTick 支持传入一个函数/不传
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+  // 在 callbacks 中 push 一个匿名函数
+  // 该匿名函数通过 try catch 实现，保证在某一个回调函数 cb 执行失败的时候也不会影响代码的运行
   callbacks.push(() => {
     if (cb) {
       try {
@@ -97,11 +106,14 @@ export function nextTick (cb?: Function, ctx?: Object) {
       _resolve(ctx)
     }
   })
+  // pending 在全局是唯一的，作为标示，初始为 false ，确保下面的逻辑只执行一次
   if (!pending) {
     pending = true
+    // timerFunc 的定义保证了在下一个 tick 才会执行 flushCallbacks
     timerFunc()
   }
   // $flow-disable-line
+  // 如果没有传回调的 cb 函数，同时当前不论是原生/polyfill，只要实现了Promise
   if (!cb && typeof Promise !== 'undefined') {
     return new Promise(resolve => {
       _resolve = resolve

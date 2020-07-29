@@ -43,6 +43,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
 
   Vue.set = set
   Vue.delete = del
+  // 调用的地方3:
   Vue.nextTick = nextTick
 
   // 2.6 explicit observable API
