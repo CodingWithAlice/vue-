@@ -41,6 +41,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
     defineReactive
   }
 
+  // 定义了全局方法 Vue.set
   Vue.set = set
   Vue.delete = del
   // 调用的地方3:

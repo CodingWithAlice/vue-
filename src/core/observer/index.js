@@ -51,9 +51,12 @@ export class Observer {
     // 把自身实例添加到数据对象 value 的 __ob__ 属性上
     // def 方法保证了 value 的 __ob__ 属性是一个不可枚举的属性，在下方 this.walk 遍历添加响应式的时候可以避免
     def(value, '__ob__', this)
+    // 如果 value 是数组
     if (Array.isArray(value)) {
-      // 如果是数组的话
+      // 如果是数组的话，判断是否有原型
       if (hasProto) {
+        // 现在一般浏览器都支持原型链，通过 protoAugment 把原型链赋值 value.__proto__ = arrayMethods
+        // arrayMethods 定义在 src/core/observer/array.js
         protoAugment(value, arrayMethods)
       } else {
         copyAugment(value, arrayMethods, arrayKeys)
@@ -97,6 +100,7 @@ export class Observer {
 function protoAugment (target, src: Object) {
   /* eslint-disable no-proto */
   // 直接把原来的proto原型方法直接覆盖成我们拦截过后的方法
+  // 把 target 的原型链指向传入的 src
   target.__proto__ = src
   /* eslint-enable no-proto */
 }
@@ -107,8 +111,11 @@ function protoAugment (target, src: Object) {
  */
 /* istanbul ignore next */
 function copyAugment (target: Object, src: Object, keys: Array<string>) {
+  // 遍历 keys
   for (let i = 0, l = keys.length; i < l; i++) {
     const key = keys[i]
+    // 通过 def 方法，把 target(key) 指向 src(key)
+    // def 方法定义在src/core/util/lang.js
     def(target, key, src[key])
   }
 }
@@ -196,7 +203,7 @@ export function defineReactive (
         dep.depend() // 追加依赖关系，进行依赖收集
         // 如果存在子observer-->只有在 value 是对象 childOb 才不是 undefined
         if (childOb) {
-          // ？？？有什么作用
+          // ？？？有什么作用--在使用 Vue.set 方法进行响应式处理的时候，收集/订阅渲染 watcher
           childOb.dep.depend()
           // 还要注意如果是数组，还要继续处理
           if (Array.isArray(value)) {
@@ -235,38 +242,52 @@ export function defineReactive (
 }
 
 /**
- * Set a property on an object. Adds the new property and
- * triggers change notification if the property doesn't
- * already exist.
+ * Set a property on an object. Adds the new property and triggers change notification if the property doesn't already exist.
+ * 接收三个参数 target：数组/对象；key：数组的下标/对象的key；val 任意类型
  */
 export function set (target: Array<any> | Object, key: any, val: any): any {
   if (process.env.NODE_ENV !== 'production' &&
     (isUndef(target) || isPrimitive(target))
   ) {
+    // 如果 target 是 undefined 或者是基础类型的值，触发一个警告
     warn(`Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+  /* 可能性1：如果传入的 target 是真实的数组，且 key 是一个合法的索引（大于0的整数）*/
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 首先修改数组的长度，取决于原数组长度/传入修改的数组下标 key 的大小
     target.length = Math.max(target.length, key)
+    // 把传入的 val 插入 第 key + 1 个位置
+    // 为什么数组只需要 splice 就够了呢？--> 创建 new Observer 时有处理
     target.splice(key, 1, val)
     return val
   }
+  /* 可能性2：如果传入的 target 是对象，先判断 key 是不是在 target 中已存在 */
   if (key in target && !(key in Object.prototype)) {
+    // 如果已存在，是可以触发对象的 setter 重新渲染的，直接赋值即可
     target[key] = val
     return val
   }
+  // 如果传入的对象 target 既不是数组，也不是已定义过的对象属性
+  // 先用 ob 获取到对象的 __ob__ 属性（对象已经被观测，是一个响应式对象），里面保存了对象的自身实例
   const ob = (target: any).__ob__
   if (target._isVue || (ob && ob.vmCount)) {
+    /* 可能性3：如果传入的对象 target 是 Vue 实例/ ob 存在 vmCount ，即 ob 是一个 rootData，就触发一个报警 */
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
       'at runtime - declare it upfront in the data option.'
     )
     return val
   }
+  /* 可能性4：如果传入的对象 target 没有 __ob__ 属性，证明这个对象不是响应式对象 */
+  // 普通对象直接赋值
   if (!ob) {
     target[key] = val
     return val
   }
+  /* 可能性5：上述条件都不满足的情况下 */
+  // 调用 defineReactive 把每个 ob.value 的 key 变成响应式对象（添加 getter 和 setter）
   defineReactive(ob.value, key, val)
+  // 手动调用 dep.notify 通知所有的订阅者进行重新渲染；这里的逻辑需要配合上面 defineReactive 中的 childOb.dep.depend()
   ob.dep.notify()
   return val
 }

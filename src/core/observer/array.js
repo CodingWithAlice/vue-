@@ -5,11 +5,13 @@
 
 import { def } from '../util/index'
 
+// 获取到数组到原型
 const arrayProto = Array.prototype
+// 创建一个新对象
 export const arrayMethods = Object.create(arrayProto)
 
 const methodsToPatch = [
-  // 这7个方法直接修改数组
+  // 这7个方法直接修改数组本身
   'push',
   'pop',
   'shift',
@@ -25,15 +27,15 @@ const methodsToPatch = [
 methodsToPatch.forEach(function (method) {
   // 逐一遍历上面的7个方法
   // cache original method
-  // 拿到数组的原型方法
+  // 先拿到数组的原型方法
   const original = arrayProto[method]
-  // 添加额外方法--做一个拦截
+  // 改写/添加额外方法--对 arrayMethods 的 method 做一个改写
   def(arrayMethods, method, function mutator (...args) {
-    // 执行原先的任务
+    // 先拿到原先方法，执行，拿到结果
     const result = original.apply(this, args)
-    // 额外的任务，通知更新
-    const ob = this.__ob__ // 拿到观察者
-    // 以下三个操作，需要额外的响应化处理
+    // 保留 __ob__
+    const ob = this.__ob__ 
+    // 以下操作，把数组原生方法中用于添加数据方法的 args 处理成响应化
     let inserted
     switch (method) {
       case 'push':
@@ -44,8 +46,9 @@ methodsToPatch.forEach(function (method) {
         inserted = args.slice(2)
         break
     }
+    // 如果是添加对象，那么响应化处理
     if (inserted) ob.observeArray(inserted)
-    // notify change 
+    // notify change 手动通知数据的变化
     ob.dep.notify()
     return result
   })
