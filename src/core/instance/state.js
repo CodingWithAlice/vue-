@@ -28,6 +28,7 @@ import {
   isReservedAttribute
 } from '../util/index'
 
+// 定义了一个共享属性的定义
 const sharedPropertyDefinition = {
   enumerable: true,
   configurable: true,
@@ -60,6 +61,7 @@ export function initState (vm: Component) {
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
+  // Computed 初始化逻辑
   if (opts.computed) initComputed(vm, opts.computed)
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
@@ -186,36 +188,47 @@ const computedWatcherOptions = { lazy: true }
 
 function initComputed (vm: Component, computed: Object) {
   // $flow-disable-line
+  // 创建两个空对象，对象是引用的，后续代码先对 watchers  进行了赋值，实际上 _computedWatchers 就是 watchers
   const watchers = vm._computedWatchers = Object.create(null)
-  // computed properties are just getters during SSR
+  // computed properties are just getters during SSR 是不是服务器渲染 - 这里不看
   const isSSR = isServerRendering()
 
+  // 遍历定义的计算属性
   for (const key in computed) {
+    // 拿到计算属性的值：函数/对象
     const userDef = computed[key]
+    // 拿到 computed 的 getter
     const getter = typeof userDef === 'function' ? userDef : userDef.get
     if (process.env.NODE_ENV !== 'production' && getter == null) {
+      // 没有 getter 就报警
       warn(
         `Getter is missing for computed property "${key}".`,
         vm
       )
     }
 
+    // 在非 SSR 的情况下，实例化 Watcher ，对应保存着在 watchers[key] 中
+    // 和创建渲染 watcher 有什么不同？--查看src/core/observer/watcher.js，只是实例化了对应的 watcher ，并不会执行
     if (!isSSR) {
+      // computed 其实是通过 Watcher 来实现的
       // create internal watcher for the computed property.
       watchers[key] = new Watcher(
         vm,
         getter || noop,
+        // 回调函数是一个 noop
         noop,
+        // watcher 配置 -- { lazy: true }
         computedWatcherOptions
       )
     }
 
-    // component-defined computed properties are already defined on the
-    // component prototype. We only need to define computed properties defined
-    // at instantiation here.
+    // component-defined computed properties are already defined on the component prototype. 
+    // We only need to define computed properties defined at instantiation here.
     if (!(key in vm)) {
+      // 如果 key 不在 vm 中
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
+      // 如果 key 已存在于 props/data，就证明重名了
       if (key in vm.$data) {
         warn(`The computed property "${key}" is already defined in data.`, vm)
       } else if (vm.$options.props && key in vm.$options.props) {
@@ -226,17 +239,21 @@ function initComputed (vm: Component, computed: Object) {
 }
 
 export function defineComputed (
-  target: any,
+  target: any, // vm
   key: string,
   userDef: Object | Function
 ) {
+  // shouldCache 在浏览器环境下是 true
   const shouldCache = !isServerRendering()
   if (typeof userDef === 'function') {
+    // 如果 userDef (computed 中定义的计算属性值)是个函数的话
+    // 定义了共享变量的 get 方法，即访问 vm.key -- computed 的值时执行的 getter 方法
     sharedPropertyDefinition.get = shouldCache
       ? createComputedGetter(key)
       : createGetterInvoker(userDef)
     sharedPropertyDefinition.set = noop
   } else {
+    // 如果不是函数，即 userDef 是一个对象的话
     sharedPropertyDefinition.get = userDef.get
       ? shouldCache && userDef.cache !== false
         ? createComputedGetter(key)
@@ -253,17 +270,24 @@ export function defineComputed (
       )
     }
   }
+  // 这里把上面定义的 get 方法响应化处理
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
+// 都是调用 createComputedGetter 该函数的返回值作为 getter 函数
 function createComputedGetter (key) {
   return function computedGetter () {
+    // 通过上面代码缓存的 watchers 进行获取对应的 watcher
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
+      // watcher.dirty 初始的时候为 true ，但是执行过一次 evaluate 后会置 false
+      // 只有在 computed 依赖值发生改变触发 computed watcher 的 update 的时候，dirty 的值会重新置为 true
       if (watcher.dirty) {
+        // 执行到 evaluate 才会执行到 new Watcher 中的 get 方法
         watcher.evaluate()
       }
       if (Dep.target) {
+        // 存在正在计算的 watcher ，调用 watcher.depend
         watcher.depend()
       }
       return watcher.value

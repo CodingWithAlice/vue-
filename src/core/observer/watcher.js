@@ -43,6 +43,8 @@ export default class Watcher {
   getter: Function;
   value: any;
 
+  // computed watcher 实例化 new Watcher 的时候执行构造函数 
+  // computed watcher 传入参数：new Watcher( vm, getter || noop , noop , { lazy: true } )
   constructor (
     // vue的实例
     vm: Component,
@@ -56,16 +58,19 @@ export default class Watcher {
     isRenderWatcher?: boolean
   ) {
     this.vm = vm
+    // computed watcher 不是渲染 watcher，不会赋值
     if (isRenderWatcher) {
       // 如果是渲染watcher，把当前的watcher实例赋值给vm._watcher
       // vm._watcher存储的是渲染watcher
       vm._watcher = this
     }
+    // 把computed watcher push 到 vm._watchers 中
     vm._watchers.push(this) 
     // options-配置 
     if (options) {
       this.deep = !!options.deep
       this.user = !!options.user
+      // computed watcher 执行时，注意这里的 lazy 为 true
       this.lazy = !!options.lazy
       this.sync = !!options.sync
       // 保存了before函数
@@ -76,6 +81,7 @@ export default class Watcher {
     this.cb = cb
     this.id = ++uid // uid for batching
     this.active = true
+    // computed watcher 执行时，注意这里 dirty 为 true
     this.dirty = this.lazy // for lazy watchers
     this.deps = [] // 表示 Watcher 实例持有的 Dep 实例的数组
     this.newDeps = [] // 表示 Watcher 实例持有的 Dep 实例的数组
@@ -84,7 +90,9 @@ export default class Watcher {
     this.expression = process.env.NODE_ENV !== 'production'
       ? expOrFn.toString()
       : ''
-    // parse expression for getter，如果传入的第二个参数是一个函数，渲染Watcher下，就是updateComponent
+    // parse expression for getter，如果传入的第二个参数是一个函数，
+    // 渲染 Watcher 下，就是updateComponent
+    // computed watcher 下，就是 userDef === 对应于 computed 中定义的函数 
     if (typeof expOrFn === 'function') {
       // 如果expOrFn是函数的话，直接赋值给Watcher的getter
       this.getter = expOrFn
@@ -101,7 +109,8 @@ export default class Watcher {
         )
       }
     }
-    // 如果是在渲染watcher情况下，就会执行get()方法求值，用于依赖收集
+    // 如果是在渲染 watcher 情况下，就会执行get()方法求值，用于依赖收集
+    // 如果是在 computed watcher 情况下，给 value 赋值 undefined ，不会再执行 get 方法进行依赖收集
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -117,7 +126,8 @@ export default class Watcher {
     let value
     const vm = this.vm
     try {
-      // 触发依赖收集，这个getter就是上面传入的expOrFun函数，就是updateComponent
+      // 触发依赖收集，这个getter就是上面传入的expOrFun函数，就是 updateComponent
+      // 如果是 computed watcher 执行， getter 就是自定义的 computed 方法，求值的过程中，会触发依赖收集，computed 依赖的值发生变化的话，就会触发 computed watcher 的 update
       // updateComponent-->执行vm._render()-->执行vnode = render.call()就会访问到定义在模版中的数据-->就会访问到这些数据的getter
       value = this.getter.call(vm, vm)
     } catch (e) {
@@ -196,6 +206,7 @@ export default class Watcher {
     /* istanbul ignore else */
     // 对于 Watcher 的不同状态，会执行不同的逻辑
     if (this.lazy) {
+      // computed watcher 的依赖发生变化时
       this.dirty = true
     } else if (this.sync) {
       this.run()
@@ -244,16 +255,19 @@ export default class Watcher {
    * This only gets called for lazy watchers.
    */
   evaluate () {
+    // computed watcher 执行到 evaluate 方法才会执行 get 方法，才会触发 getter
     this.value = this.get()
     this.dirty = false
   }
 
   /**
    * Depend on all deps collected by this watcher.
+   * this.deps 表示 Watcher 实例持有的 Dep 实例的数组
    */
   depend () {
     let i = this.deps.length
     while (i--) {
+      // deps.depend -> Dep.target.addDep(this) -> dep.addSub(this) -> this.subs.push(sub) -> 后续变化的时候通知的是 subs 这个数组
       this.deps[i].depend()
     }
   }
