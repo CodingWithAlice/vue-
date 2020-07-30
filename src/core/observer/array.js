@@ -43,6 +43,7 @@ methodsToPatch.forEach(function (method) {
         inserted = args
         break
       case 'splice':
+        // slice(start，end)，这里从第二位开始获取参数，是因为 splice（start，deleteNum，[items...]），需要获取的是修改的值
         inserted = args.slice(2)
         break
     }
