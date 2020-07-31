@@ -197,7 +197,7 @@ function initComputed (vm: Component, computed: Object) {
   for (const key in computed) {
     // 拿到计算属性的值：函数/对象
     const userDef = computed[key]
-    // 拿到 computed 的 getter
+    // 获取当前计算属性的 getter
     const getter = typeof userDef === 'function' ? userDef : userDef.get
     if (process.env.NODE_ENV !== 'production' && getter == null) {
       // 没有 getter 就报警
@@ -207,6 +207,7 @@ function initComputed (vm: Component, computed: Object) {
       )
     }
 
+    // 为每一个 getter 创建一个 watcher
     // 在非 SSR 的情况下，实例化 Watcher ，对应保存着在 watchers[key] 中
     // 和创建渲染 watcher 有什么不同？--查看src/core/observer/watcher.js，只是实例化了对应的 watcher ，并不会执行
     if (!isSSR) {
@@ -274,7 +275,7 @@ export function defineComputed (
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
-// 都是调用 createComputedGetter 该函数的返回值作为 getter 函数
+// 调用 createComputedGetter 该函数的返回函数作为计算属性对应的 getter 函数
 function createComputedGetter (key) {
   return function computedGetter () {
     // 通过上面代码缓存的 watchers 进行获取对应的 watcher
