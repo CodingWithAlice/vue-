@@ -65,6 +65,7 @@ export function initExtend (Vue: GlobalAPI) {
     if (Sub.options.props) {
       initProps(Sub)
     }
+    // 在执行 Vue.extend 即创建子组件构造器的过程中，若存在 computed 属性，则调用方法提前定义
     if (Sub.options.computed) {
       initComputed(Sub)
     }
@@ -111,7 +112,10 @@ function initProps (Comp) {
 
 function initComputed (Comp) {
   const computed = Comp.options.computed
+  // 遍历 computed 中定义的属性
   for (const key in computed) {
+    // 提前调用 defineComputed 方法，将属性定义在组件的原型中
+    // 在原型上定义，是为了给多组件进行共享
     defineComputed(Comp.prototype, key, computed[key])
   }
 }

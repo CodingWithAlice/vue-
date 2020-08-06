@@ -122,6 +122,7 @@ export default class Watcher {
    */
   get () {
     // 设置Dep.target，定义在src/core/observer/dep.js中，保存当前正在计算的Watcher
+    // 在计算属性执行到 evaluate 时进入该 get 方法，把 computed watcher push 进 Dep.target，替换了原来的渲染 watcher
     pushTarget(this)
     let value
     const vm = this.vm
@@ -129,6 +130,7 @@ export default class Watcher {
       // 触发依赖收集，这个getter就是上面传入的expOrFun函数，就是 updateComponent
       // 如果是 computed watcher 执行， getter 就是自定义的 computed 方法，求值的过程中，会触发依赖收集，computed 依赖的值发生变化的话，就会触发 computed watcher 的 update
       // updateComponent-->执行vm._render()-->执行vnode = render.call()就会访问到定义在模版中的数据-->就会访问到这些数据的getter
+      // computed watcher 的时候会访问 computed 定义，定义中调用的 data 的变量是动态绑定的，就会触发 proxy 
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
