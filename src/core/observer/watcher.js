@@ -92,7 +92,7 @@ export default class Watcher {
       : ''
     // parse expression for getter，如果传入的第二个参数是一个函数，
     // 渲染 Watcher 下，就是updateComponent
-    // computed watcher 下，就是 userDef === 对应于 computed 中定义的函数 
+    // computed watcher 下，就是 userDef ==> 对应于 computed 中定义的函数 
     if (typeof expOrFn === 'function') {
       // 如果expOrFn是函数的话，直接赋值给Watcher的getter
       this.getter = expOrFn
@@ -110,7 +110,7 @@ export default class Watcher {
       }
     }
     // 如果是在渲染 watcher 情况下，就会执行get()方法求值，用于依赖收集
-    // 如果是在 computed watcher 情况下，给 value 赋值 undefined ，不会再执行 get 方法进行依赖收集
+    // 如果是在 computed watcher 情况下，给 value 赋值 undefined ，不会再执行 get 方法进行 依赖收集
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -209,7 +209,7 @@ export default class Watcher {
     // 对于 Watcher 的不同状态，会执行不同的逻辑
     if (this.lazy) {
       // computed watcher 的依赖发生变化时
-      this.dirty = true
+      this.d irty = true
     } else if (this.sync) {
       this.run()
     } else {

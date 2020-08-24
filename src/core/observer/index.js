@@ -236,6 +236,7 @@ export function defineReactive (
       // 关键点1，如果用户设置的新值是对象，那么会把 newVal 变成响应式对象
       childOb = !shallow && observe(newVal)
       // 关键点2，通知所有的订阅者，方法定义在 src/core/observer/dep.js
+      // computed 触发更新的时候，主要执行的是 notify ，通知的是 computed watcher 做 update
       dep.notify()
     }
   })

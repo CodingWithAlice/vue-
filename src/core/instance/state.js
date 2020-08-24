@@ -197,7 +197,7 @@ function initComputed (vm: Component, computed: Object) {
   for (const key in computed) {
     // 拿到计算属性的值：函数/对象
     const userDef = computed[key]
-    // 获取当前计算属性的 getter
+    // 获取当前计算属性的 getter -- 一般写为函数，如果不是函数，是对象的话，要求对象有 get 属性定义一个函数
     const getter = typeof userDef === 'function' ? userDef : userDef.get
     if (process.env.NODE_ENV !== 'production' && getter == null) {
       // 没有 getter 就报警
@@ -244,7 +244,7 @@ export function defineComputed (
   key: string,
   userDef: Object | Function
 ) {
-  // shouldCache 在浏览器环境下是 true
+  // shouldCache 在浏览器环境下是 true ，证明需要缓存
   const shouldCache = !isServerRendering()
   if (typeof userDef === 'function') {
     // 如果 userDef (computed 中定义的计算属性值)是个函数的话
@@ -275,7 +275,7 @@ export function defineComputed (
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
-// 调用 createComputedGetter 该函数的返回函数作为计算属性对应的 getter 函数
+// 调用该函数的返回函数作为计算属性对应的 getter 函数
 function createComputedGetter (key) {
   return function computedGetter () {
     // 通过上面代码缓存的 watchers 进行获取对应的 watcher
