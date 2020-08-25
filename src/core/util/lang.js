@@ -32,12 +32,15 @@ export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
 
 /**
  * Parse simple path.
+ * 执行最后返回一个函数，接收一个参数
+ * 根据 path 的路径，遍历找到传入参数的方法
  */
 const bailRE = new RegExp(`[^${unicodeRegExp.source}.$_\\d]`)
 export function parsePath (path: string): any {
   if (bailRE.test(path)) {
     return
   }
+  // 把 path 拆分成一个数组
   const segments = path.split('.')
   return function (obj) {
     for (let i = 0; i < segments.length; i++) {

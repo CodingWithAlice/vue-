@@ -93,11 +93,13 @@ export default class Watcher {
     // parse expression for getter，如果传入的第二个参数是一个函数，
     // 渲染 Watcher 下，就是updateComponent
     // computed watcher 下，就是 userDef ==> 对应于 computed 中定义的函数 
+    // 侦听属性 watch 下，expOrFn 书写为函数/字符串
     if (typeof expOrFn === 'function') {
       // 如果expOrFn是函数的话，直接赋值给Watcher的getter
       this.getter = expOrFn
     } else {
-      // 如果是个表达式的话，要转换成为一个函数
+      // 如果是个 表达式/字符串 的话，要转换成为一个函数
+      // parsePath 方法定义在 src/core/util/lang.js，返回一个函数
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = noop
@@ -111,6 +113,7 @@ export default class Watcher {
     }
     // 如果是在渲染 watcher 情况下，就会执行get()方法求值，用于依赖收集
     // 如果是在 computed watcher 情况下，给 value 赋值 undefined ，不会再执行 get 方法进行 依赖收集
+    // 如果是在 侦听属性 watch 情况下，在这个 new Watcher 的时候，就会执行一次 get 函数对 watcher 进行一次求值
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -123,6 +126,7 @@ export default class Watcher {
   get () {
     // 设置Dep.target，定义在src/core/observer/dep.js中，保存当前正在计算的Watcher
     // 在计算属性执行到 evaluate 时进入该 get 方法，把 computed watcher push 进 Dep.target，替换了原来的渲染 watcher
+    // 在侦听属性执行第一次 new Watcher 的时候就会进入，把 user wathcer push 进 Dep.target
     pushTarget(this)
     let value
     const vm = this.vm
@@ -131,6 +135,7 @@ export default class Watcher {
       // 如果是 computed watcher 执行， getter 就是自定义的 computed 方法，求值的过程中，会触发依赖收集，computed 依赖的值发生变化的话，就会触发 computed watcher 的 update
       // updateComponent-->执行vm._render()-->执行vnode = render.call()就会访问到定义在模版中的数据-->就会访问到这些数据的getter
       // computed watcher 的时候会访问 computed 定义，定义中调用的 data 的变量是动态绑定的，就会触发 proxy 
+      // 在侦听属性 watch 执行过程中，这里就是将 vm 实例传进了 parsePath 方法，parsePath 会去访问求值，就会建立了整个依赖收集。访问就会触发 getter ，getter 就会触发 defineReactive 上面的 getter 函数，然后就会触发 Dep.depend()，就会把 user Watcher 订阅到 Dep 中，一旦数据发生变化，就会执行当前 user Watcher 的 update 方法
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -205,17 +210,16 @@ export default class Watcher {
    * Will be called when a dependency changes.
    */
   update () {
-    /* istanbul ignore else */
-    // 对于 Watcher 的不同状态，会执行不同的逻辑
+    /* istanbul ignore else 对于 Watcher 的不同状态，会执行不同的逻辑*/
+    // lazy 是给 computed watcher 的参数，computed watcher 的依赖发生变化时
     if (this.lazy) {
-      // computed watcher 的依赖发生变化时
-      this.d irty = true
+      this.dirty = true
     } else if (this.sync) {
       this.run()
     } else {
       // 在一般组件数据更新的场景，会走到这里
-      // 方法定义在src/core/observer/scheduler.js
-      queueWatcher(this)
+      // 侦听属性 watch 要么执行 run，要么执行 queueWatcher（把当前的 user watcher 放到watcher 的执行队列中）
+      queueWatcher(this) // 方法定义在src/core/observer/scheduler.js
     }
   }
 
