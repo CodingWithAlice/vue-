@@ -33,15 +33,16 @@ export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
 /**
  * Parse simple path.
  * 执行最后返回一个函数，接收一个参数
- * 根据 path 的路径，遍历找到传入参数的方法
+ * 根据 path -- 自定义监听的属性的名称 -- 一般为字符串，遍历找到传入参数的方法
  */
 const bailRE = new RegExp(`[^${unicodeRegExp.source}.$_\\d]`)
 export function parsePath (path: string): any {
   if (bailRE.test(path)) {
     return
   }
-  // 把 path 拆分成一个数组
+  // 把 path 拆分成数组形式
   const segments = path.split('.')
+  // 这里返回的函数是赋值给 watch执行的时候的 getter 方法的，传入的 obj 一般是 vm 实例，该函数的作用就是在实例上面找到 监听对象 的方法
   return function (obj) {
     for (let i = 0; i < segments.length; i++) {
       if (!obj) return
