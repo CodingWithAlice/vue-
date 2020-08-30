@@ -12,7 +12,7 @@ const seenObjects = new Set()
  * is collected as a "deep" dependency.
  * 作用：深度遍历一个对象/数组，触发每一个值的 getter，方便收集依赖
  */
-export function trave rse (val: any) {
+export function traverse (val: any) {
   _traverse(val, seenObjects)
   seenObjects.clear()
 }

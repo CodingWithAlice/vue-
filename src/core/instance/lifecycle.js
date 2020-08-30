@@ -72,6 +72,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
     const prevEl = vm.$el
+    // 在组件更新的时候，vm._vnode 中保存了上一个生成的 VNode
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
     // 将之前render生成的渲染vnode赋值给_vnode
@@ -90,7 +91,8 @@ export function lifecycleMixin (Vue: Class<Component>) {
       // 子组件的参数vm.$el是不存在的，undefined；返回的结果是一个DOM
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
-      // updates 数据更新的时候
+      // updates 数据更新
+      // __patch__方法定义在 src/core/vdom/patch.js中
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
