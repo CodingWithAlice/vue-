@@ -445,6 +445,17 @@ export function createPatchFunction (backend) {
     }
   }
 
+  /**
+   * 
+   * @param {*} parentElm 
+   * @param {*} oldCh 
+   * @param {*} newCh 
+   * @param {*} insertedVnodeQueue 
+   * @param {*} removeOnly 
+   * 作用：
+   * 实现：
+   * 这是 diff 算法中最复杂的方法
+   */
   function updateChildren (parentElm, oldCh, newCh, insertedVnodeQueue, removeOnly) {
     let oldStartIdx = 0
     let newStartIdx = 0
@@ -559,6 +570,7 @@ export function createPatchFunction (backend) {
       vnode = ownerArray[index] = cloneVNode(vnode)
     }
 
+    // 拿到原生 DOM 节点
     const elm = vnode.elm = oldVnode.elm
 
     if (isTrue(oldVnode.isAsyncPlaceholder)) {
@@ -585,33 +597,48 @@ export function createPatchFunction (backend) {
 
     let i
     const data = vnode.data
+    // prepatch 定义在 src/core/vdom/create-component.js 中
+    // data.hook.prepatch 证明这个 vnode 是一个组件 VNode -> 执行 prepatch 方法，对调用的子组件的 props/事件/... 进行更新
     if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
       i(oldVnode, vnode)
     }
 
+    // 子组件 Vnode 是没有 children 的 -> undefined;普通 Vnode 才有 children
     const oldCh = oldVnode.children
     const ch = vnode.children
     if (isDef(data) && isPatchable(vnode)) {
+      // 如果定义了 data，并且 vnode 可以挂载 -> 执行 update 钩子
       for (i = 0; i < cbs.update.length; ++i) cbs.update[i](oldVnode, vnode)
       if (isDef(i = data.hook) && isDef(i = i.update)) i(oldVnode, vnode)
     }
     if (isUndef(vnode.text)) {
+      // 如果新节点不是文本节点
       if (isDef(oldCh) && isDef(ch)) {
+        // 1、如果新旧 VNode 同时存在 children ，且不相等时，执行 updateChildren 方法
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly)
       } else if (isDef(ch)) {
+        // 2、如果只有新 VNode 存在 children，旧节点不存在 children
         if (process.env.NODE_ENV !== 'production') {
           checkDuplicateKeys(ch)
         }
+        // 那么，只要旧节点是文本节点，那么清空该节点 -> 然后将新节点插入
         if (isDef(oldVnode.text)) nodeOps.setTextContent(elm, '')
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue)
       } else if (isDef(oldCh)) {
+        // 3、如果只有旧节点存在 children，新节点不存在 children
+        // 那就把老节点删除
         removeVnodes(oldCh, 0, oldCh.length - 1)
       } else if (isDef(oldVnode.text)) {
+        // 4、都没有定义 children
+        // 且老节点是 文本节点 -> 把老节点设置为空
         nodeOps.setTextContent(elm, '')
       }
     } else if (oldVnode.text !== vnode.text) {
+      // 如果定义了 text -> 普通的文本节点
+      // 如果新旧节点的 text 不相等的话 -> 将 text 做更新 -> 文本节点的替换
       nodeOps.setTextContent(elm, vnode.text)
     }
+    // 最后执行 postpatch 方法
     if (isDef(data)) {
       if (isDef(i = data.hook) && isDef(i = i.postpatch)) i(oldVnode, vnode)
     }

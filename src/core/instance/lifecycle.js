@@ -259,6 +259,16 @@ export function mountComponent (
   return vm
 }
 
+/**
+ * 
+ * @param {*} vm 
+ * @param {*} propsData 
+ * @param {*} listeners 
+ * @param {*} parentVnode 
+ * @param {*} renderChildren 
+ * 作用：在子组件调用子组件时，会传一些 props、事件等，在组件更新的时候，对子组件的这些也要更新
+ * 实现：
+ */
 export function updateChildComponent (
   vm: Component,
   propsData: ?Object,

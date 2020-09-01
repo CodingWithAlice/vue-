@@ -55,9 +55,17 @@ const componentVNodeHooks = {
     }
   },
 
+  /**
+   * 
+   * @param {*} oldVnode 
+   * @param {*} vnode 
+   * 作用：
+   * 实现：最终执行 updateChildComponent 方法
+   */
   prepatch (oldVnode: MountedComponentVNode, vnode: MountedComponentVNode) {
     const options = vnode.componentOptions
     const child = vnode.componentInstance = oldVnode.componentInstance
+    // updateChildComponent 定义在 src/core/instance/lifecycle.js 中
     updateChildComponent(
       child,
       options.propsData, // updated props
