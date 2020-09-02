@@ -856,6 +856,7 @@ export function createPatchFunction (backend) {
         if (isDef(vnode.parent)) {
           // vnode 是渲染 VNode，即根 VNode；
           // vnode.parent 是在 render 函数中定义的父级占位符节点
+          // 白话一点理解就是，子组件在父组件中，调用的那个 VNode，就成为占位符节点
           let ancestor = vnode.parent
           const patchable = isPatchable(vnode) // 判断是否为可挂载节点
           while (ancestor) {
@@ -884,6 +885,7 @@ export function createPatchFunction (backend) {
               registerRef(ancestor)
             }
             // 如果不可挂载，就继续网上找（子组件调用子组件的情况）
+            // 子组件的 占位符节点 不是一个 渲染VNode，即不是一个 root 节点，它的 parent 为空
             ancestor = ancestor.parent
           }
         }
