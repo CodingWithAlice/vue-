@@ -452,7 +452,7 @@ export function createPatchFunction (backend) {
    * @param {*} newCh 
    * @param {*} insertedVnodeQueue 
    * @param {*} removeOnly 
-   * 作用：
+   * 作用：递归遍历DOM树进行比对
    * 实现：
    * 这是 diff 算法中最复杂的方法
    */
@@ -476,26 +476,35 @@ export function createPatchFunction (backend) {
       checkDuplicateKeys(newCh)
     }
 
+    // 执行遍历的条件：oldCh 和 newCh 都还没有遍历完的时候
     while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
       if (isUndef(oldStartVnode)) {
+        // oldCh 没有定义 start Vnode 的话，就向后 +1 取 Vnode
         oldStartVnode = oldCh[++oldStartIdx] // Vnode has been moved left
       } else if (isUndef(oldEndVnode)) {
+        // oldCh 没有定义 end   Vnode 的话，就向前 -1 取 Vnode
         oldEndVnode = oldCh[--oldEndIdx]
       } else if (sameVnode(oldStartVnode, newStartVnode)) {
+        // oldCh 和 newCh 的第一个 有效节点是相等时，调用 patchVnode ，然后索引 +1 向后继续比对
         patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
         oldStartVnode = oldCh[++oldStartIdx]
         newStartVnode = newCh[++newStartIdx]
       } else if (sameVnode(oldEndVnode, newEndVnode)) {
+        // oldCh 和 newCh 的最后一个有效节点是相等时，调用 patchVnode ，然后索引 -1 向前继续比对
         patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
         oldEndVnode = oldCh[--oldEndIdx]
         newEndVnode = newCh[--newEndIdx]
       } else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
+        // oldCh 的第一个有效节点和 newCh 最后一个有效节点是相等的
         patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
+        // nodeOps.insertBefore 这是原生方法，这里作用是移动位置，将 oldCh 中 start 移到 end 的后面
         canMove && nodeOps.insertBefore(parentElm, oldStartVnode.elm, nodeOps.nextSibling(oldEndVnode.elm))
         oldStartVnode = oldCh[++oldStartIdx]
         newEndVnode = newCh[--newEndIdx]
       } else if (sameVnode(oldEndVnode, newStartVnode)) { // Vnode moved left
+        // oldCh 的最后一个有效节点和 newCh 第一个有效节点是相等的
         patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
+        // 将 oldCh 中 end 移到 start 的前面
         canMove && nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm)
         oldEndVnode = oldCh[--oldEndIdx]
         newStartVnode = newCh[++newStartIdx]
@@ -856,7 +865,7 @@ export function createPatchFunction (backend) {
         if (isDef(vnode.parent)) {
           // vnode 是渲染 VNode，即根 VNode；
           // vnode.parent 是在 render 函数中定义的父级占位符节点
-          // 白话一点理解就是，子组件在父组件中，调用的那个 VNode，就成为占位符节点
+          // 白话一点理解就是，子组件在父组件中，定义的那个 VNode -> 会渲染成组件 VNode，也就是占位符节点
           let ancestor = vnode.parent
           const patchable = isPatchable(vnode) // 判断是否为可挂载节点
           while (ancestor) {
