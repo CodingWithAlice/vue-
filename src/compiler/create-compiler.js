@@ -18,6 +18,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
         (tip ? tips : errors).push(msg)
       }
 
+      // 对传入 compile 的配置和基础配置处理
       if (options) {
         if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
           // $flow-disable-line
@@ -58,12 +59,15 @@ export function createCompilerCreator (baseCompile: Function): Function {
 
       finalOptions.warn = warn
 
+      // 真正的编译，将 template 和处理得到的最终配置作为参数传入
       const compiled = baseCompile(template.trim(), finalOptions)
       if (process.env.NODE_ENV !== 'production') {
         detectErrors(compiled.ast, warn)
       }
+      // 处理编译后的errors、tips
       compiled.errors = errors
       compiled.tips = tips
+      // 返回编译结果
       return compiled
     }
 

@@ -21,11 +21,21 @@ function createFunction (code, errors) {
 export function createCompileToFunctionFn (compile: Function): Function {
   const cache = Object.create(null)
 
+  /**
+   * 参数解析：
+   * template 传入模版字符串
+   * options 传入和编译相关的配置
+   * vm 传入vm实例
+   * 函数作用：
+   * 核心代码：const compiled = compile(template, options)
+   * 其中 compile 是传入的函数
+   */
   return function compileToFunctions (
     template: string,
     options?: CompilerOptions,
     vm?: Component
   ): CompiledFunctionResult {
+    // 拷贝一份配置 
     options = extend({}, options)
     const warn = options.warn || baseWarn
     delete options.warn
@@ -34,6 +44,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     if (process.env.NODE_ENV !== 'production') {
       // detect possible CSP restriction
       try {
+        // 判断是否能通过 new Function 将编译的代码动态转换成函数
         new Function('return 1')
       } catch (e) {
         if (e.toString().match(/unsafe-eval|CSP/)) {
@@ -49,6 +60,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     }
 
     // check cache
+    // 判断是否有缓存，同一个模版不重复编译
     const key = options.delimiters
       ? String(options.delimiters) + template
       : template
@@ -56,10 +68,11 @@ export function createCompileToFunctionFn (compile: Function): Function {
       return cache[key]
     }
 
-    // compile
+    // compile -- 真正的编译开始
     const compiled = compile(template, options)
 
     // check compilation errors/tips
+    // 对编译的结果处理：eorros、tips
     if (process.env.NODE_ENV !== 'production') {
       if (compiled.errors && compiled.errors.length) {
         if (options.outputSourceRange) {
@@ -90,6 +103,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     // turn code into functions
     const res = {}
     const fnGenErrors = []
+    // 转换成真正的函数
     res.render = createFunction(compiled.render, fnGenErrors)
     res.staticRenderFns = compiled.staticRenderFns.map(code => {
       return createFunction(code, fnGenErrors)
@@ -109,6 +123,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
       }
     }
 
+    // 把结果通过缓存保留
     return (cache[key] = res)
   }
 }
