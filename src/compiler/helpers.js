@@ -11,6 +11,7 @@ export function baseWarn (msg: string, range?: Range) {
 }
 /* eslint-enable no-unused-vars */
 
+// 返回一个数组，_ 真值（true）返回
 export function pluckModuleFunction<F: Function> (
   modules: ?Array<Object>,
   key: string
@@ -180,6 +181,7 @@ export function getBindingAttr (
 // doesn't get processed by processAttrs.
 // By default it does NOT remove it from the map (attrsMap) because the map is
 // needed during codegen.
+// 作用：遍历 attrsMap，删除指定 name 属性，返回该属性值
 export function getAndRemoveAttr (
   el: ASTElement,
   name: string,

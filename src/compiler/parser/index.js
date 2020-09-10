@@ -57,16 +57,17 @@ let platformMustUseProp
 let platformGetTagNamespace
 let maybeComponent
 
+// 创建 ast 元素，返回一个 js 的对象
 export function createASTElement (
   tag: string,
   attrs: Array<ASTAttr>,
   parent: ASTElement | void
 ): ASTElement {
   return {
-    type: 1,
-    tag,
-    attrsList: attrs,
-    attrsMap: makeAttrsMap(attrs),
+    type: 1, // ast 节点类型，1:普通元素节点
+    tag, // 标签名
+    attrsList: attrs, // 属性数组
+    attrsMap: makeAttrsMap(attrs), // 转换成对象形式的属性数组
     rawAttrsMap: {},
     parent,
     children: []
@@ -74,12 +75,13 @@ export function createASTElement (
 }
 
 /**
- * Convert HTML string to AST.
+ * Convert  HTML string to AST.
  */
 export function parse (
   template: string,
   options: CompilerOptions
 ): ASTElement | void {
+  // 接下来这 part 都是在处理配置 options
   warn = options.warn || baseWarn
 
   platformIsPreTag = options.isPreTag || no
@@ -88,6 +90,10 @@ export function parse (
   const isReservedTag = options.isReservedTag || no
   maybeComponent = (el: ASTElement) => !!el.component || !isReservedTag(el.tag)
 
+  // baseOptions 定义在 src/platforms/web/compiler/options.js 
+  // modules 包含了 compiler/modules 下面的 class.js/style.js/model.js
+  // class.js+style.js->返回transformNode;model.js->返回preTransformNode
+  // 这里几个函数的作用：拉取模块，存储在对应数组中
   transforms = pluckModuleFunction(options.modules, 'transformNode')
   preTransforms = pluckModuleFunction(options.modules, 'preTransformNode')
   postTransforms = pluckModuleFunction(options.modules, 'postTransformNode')
@@ -135,6 +141,7 @@ export function parse (
         )
       }
     }
+    // 至少是第二次进入 start 逻辑，所以存在 currentParent
     if (currentParent && !element.forbidden) {
       if (element.elseif || element.else) {
         processIfConditions(element, currentParent)
@@ -146,6 +153,7 @@ export function parse (
           const name = element.slotTarget || '"default"'
           ;(currentParent.scopedSlots || (currentParent.scopedSlots = {}))[name] = element
         }
+        // 将当前的节点 push 到父节点，创建父子关系
         currentParent.children.push(element)
         element.parent = currentParent
       }
@@ -184,6 +192,7 @@ export function parse (
     }
   }
 
+  // 确保只有一个根节点
   function checkRootConstraints (el) {
     if (el.tag === 'slot' || el.tag === 'template') {
       warnOnce(
@@ -201,6 +210,7 @@ export function parse (
     }
   }
 
+  // 接收模版、自定义的配置和方法为参数
   parseHTML(template, {
     warn,
     expectHTML: options.expectHTML,
@@ -210,9 +220,20 @@ export function parse (
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     outputSourceRange: options.outputSourceRange,
+    /**
+     * 
+     * @param {*} tag  标签
+     * @param {*} attrs  属性
+     * @param {*} unary  是否单闭合标签
+     * @param {*} start 
+     * @param {*} end 
+     * 
+     * 实现： ast 元素的创建 createASTElement 和管理 process
+     */
     start (tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one
+      // currentParent 是一个局部变量，保留父的 ast 节点
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       // handle IE svg bug
@@ -221,6 +242,7 @@ export function parse (
         attrs = guardIESVGBug(attrs)
       }
 
+      // 创建 ast 元素
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -249,6 +271,7 @@ export function parse (
         })
       }
 
+      // 在非服务端渲染时，style 和 script 标签是不允许放在模版中的
       if (isForbiddenTag(element) && !isServerRendering()) {
         element.forbidden = true
         process.env.NODE_ENV !== 'production' && warn(
@@ -264,6 +287,7 @@ export function parse (
         element = preTransforms[i](element, options) || element
       }
 
+      // v-pre 指令相关
       if (!inVPre) {
         processPre(element)
         if (element.pre) {
@@ -273,6 +297,7 @@ export function parse (
       if (platformIsPreTag(element.tag)) {
         inPre = true
       }
+      // for if once
       if (inVPre) {
         processRawAttrs(element)
       } else if (!element.processed) {
@@ -282,6 +307,7 @@ export function parse (
         processOnce(element)
       }
 
+      // 确保根节点只有一个
       if (!root) {
         root = element
         if (process.env.NODE_ENV !== 'production') {
@@ -289,15 +315,26 @@ export function parse (
         }
       }
 
+      // 若不是自闭合标签
       if (!unary) {
+        // 将当前节点存锤为父节点，因为逻辑走到这里，就结束了这个标签的解析，接下来将会解析它的子节点
         currentParent = element
         stack.push(element)
       } else {
+        // 创建父子关系
         closeElement(element)
       }
     },
 
-    end (tag, start, end) {
+    /**
+     * 
+     * @param {*} tag 
+     * @param {*} start 
+     * @param {*} end 
+     * 
+     * 实现：ast 结束标签 closeElement
+     */
+    end (tag, start, end) { 
       const element = stack[stack.length - 1]
       // pop stack
       stack.length -= 1
@@ -308,7 +345,15 @@ export function parse (
       closeElement(element)
     },
 
+    /**
+     * 
+     * @param {*} text 
+     * @param {*} start 
+     * @param {*} end 
+     * 作用：文本节点的处理和创建
+     */
     chars (text: string, start: number, end: number) {
+      // 不存在 currentParent ，两种可能：1、整个 template 就是纯本文 2、text 定义在根节点之外
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
           if (text === template) {
@@ -335,6 +380,7 @@ export function parse (
       }
       const children = currentParent.children
       if (inPre || text.trim()) {
+        // 如果父节点不是 script/style ，需要转码
         text = isTextTag(currentParent) ? text : decodeHTMLCached(text)
       } else if (!children.length) {
         // remove the whitespace-only node right after an opening tag
@@ -350,6 +396,7 @@ export function parse (
       } else {
         text = preserveWhitespace ? ' ' : ''
       }
+      // 如果还存在 text
       if (text) {
         if (!inPre && whitespaceOption === 'condense') {
           // condense consecutive whitespaces into single space
@@ -358,15 +405,17 @@ export function parse (
         let res
         let child: ?ASTNode
         if (!inVPre && text !== ' ' && (res = parseText(text, delimiters))) {
+          // 通过 parseText 解析文本中的插值及过滤器
+          // 然后插入节点 
           child = {
-            type: 2,
+            type: 2, // 代表了表达式 ast
             expression: res.expression,
             tokens: res.tokens,
             text
           }
         } else if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
           child = {
-            type: 3,
+            type: 3, // 代表了纯文本节点的 ast
             text
           }
         }
@@ -379,14 +428,21 @@ export function parse (
         }
       }
     },
+    /**
+     * 
+     * @param {*} text 
+     * @param {*} start 
+     * @param {*} end 
+     * 作用：创建注释节点
+     */
     comment (text: string, start, end) {
       // adding anyting as a sibling to the root node is forbidden
       // comments should still be allowed, but ignored
       if (currentParent) {
         const child: ASTText = {
-          type: 3,
+          type: 3, // 纯文本节点 ast
           text,
-          isComment: true
+          isComment: true // 标识为注释节点
         }
         if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
           child.start = start
@@ -488,9 +544,11 @@ function processRef (el) {
 
 export function processFor (el: ASTElement) {
   let exp
+  // exp 保存 v-for 属性的值
   if ((exp = getAndRemoveAttr(el, 'v-for'))) {
     const res = parseFor(exp)
     if (res) {
+      // 利用 extend 方法把 v-for 的属性值扩展到 ast 的节点上
       extend(el, res)
     } else if (process.env.NODE_ENV !== 'production') {
       warn(
@@ -508,13 +566,18 @@ type ForParseResult = {
   iterator2?: string;
 };
 
+// 解析表达式 例如 (item,index) in data，返回对应的遍历对象和遍历内容
 export function parseFor (exp: string): ?ForParseResult {
+  // 利用正则表达式进行匹配：中间 in/of 不匹配
   const inMatch = exp.match(forAliasRE)
   if (!inMatch) return
   const res = {}
+  // 保存下标为2的遍历对象 data 
   res.for = inMatch[2].trim()
+  // 去除空格+括号
   const alias = inMatch[1].trim().replace(stripParensRE, '')
   const iteratorMatch = alias.match(forIteratorRE)
+  // 这里注意，遍历可以遍历三个值：item、index、key
   if (iteratorMatch) {
     res.alias = alias.replace(forIteratorRE, '').trim()
     res.iterator1 = iteratorMatch[1].trim()
@@ -527,10 +590,12 @@ export function parseFor (exp: string): ?ForParseResult {
   return res
 }
 
+// 获取 v-if 的表达式
 function processIf (el) {
   const exp = getAndRemoveAttr(el, 'v-if')
   if (exp) {
     el.if = exp
+    // 在 el 上面添加 ifConditions 属性
     addIfCondition(el, {
       exp: exp,
       block: el
@@ -580,6 +645,7 @@ function findPrevElement (children: Array<any>): ASTElement | void {
   }
 }
 
+// 作用：在 ifConditions 中添加 condition
 export function addIfCondition (el: ASTElement, condition: ASTIfCondition) {
   if (!el.ifConditions) {
     el.ifConditions = []
@@ -912,6 +978,7 @@ function parseModifiers (name: string): Object | void {
   }
 }
 
+// 遍历属性数组，返回一个对象，以 属性名：属性值 的形式
 function makeAttrsMap (attrs: Array<Object>): Object {
   const map = {}
   for (let i = 0, l = attrs.length; i < l; i++) {

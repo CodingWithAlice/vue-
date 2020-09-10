@@ -2,6 +2,7 @@
 
 import { makeMap } from 'shared/util'
 
+// 定义了这些标签可以单闭合
 export const isUnaryTag = makeMap(
   'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
   'link,meta,param,source,track,wbr'
