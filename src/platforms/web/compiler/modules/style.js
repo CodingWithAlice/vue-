@@ -34,6 +34,7 @@ function transformNode (el: ASTElement, options: CompilerOptions) {
   }
 }
 
+// style.js  中有对 genData 进行定义，将 style 进行静态和动态的区分
 function genData (el: ASTElement): string {
   let data = ''
   if (el.staticStyle) {

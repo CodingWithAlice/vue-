@@ -24,7 +24,9 @@ export class CodegenState {
   constructor (options: CompilerOptions) {
     this.options = options
     this.warn = options.warn || baseWarn
+    // 通过 pluck 方法去 src/platforms/web/compiler/modules/ 文件夹下面的 class.js/model.js/style.js文件中拉取对应方法
     this.transforms = pluckModuleFunction(options.modules, 'transformCode')
+    // dataGenFns 在 class.js/style.js 中都有定义，对静态/动态样式返回不同属性
     this.dataGenFns = pluckModuleFunction(options.modules, 'genData')
     this.directives = extend(extend({}, baseDirectives), options.directives)
     const isReservedTag = options.isReservedTag || no
@@ -44,9 +46,12 @@ export function generate (
   ast: ASTElement | void,
   options: CompilerOptions
 ): CodegenResult {
+  // 实例化一个class
   const state = new CodegenState(options)
+  // 根据 ast 生成对应的 code ；没有的话就生成一个 div 的空 VNode
   const code = ast ? genElement(ast, state) : '_c("div")'
   return {
+    // 重点看返回值：render 属性就是用于 render 函数执行的代码；staticRenderFns 是 optimize 生成的 staticroot 相关代码
     render: `with(this){return ${code}}`,
     staticRenderFns: state.staticRenderFns
   }
@@ -77,15 +82,18 @@ export function genElement (el: ASTElement, state: CodegenState): string {
     } else {
       let data
       if (!el.plain || (el.pre && state.maybeComponent(el))) {
+        // 主要返回了和静态/动态 class/Style相关的属性对象
+        // 例如：{staticClass:"list",class:bindCls}
         data = genData(el, state)
       }
 
       const children = el.inlineTemplate ? null : genChildren(el, state, true)
-      code = `_c('${el.tag}'${
-        data ? `,${data}` : '' // data
-      }${
-        children ? `,${children}` : '' // children
-      })`
+      // code 中主要调用了三个值：tag、data、children
+      code = `_c(
+        '${el.tag}'
+        ${data ? `,${data}` : ''}
+        ${children ? `,${children}` : ''}
+        )`
     }
     // module transforms
     for (let i = 0; i < state.transforms.length; i++) {
@@ -142,12 +150,14 @@ function genOnce (el: ASTElement, state: CodegenState): string {
   }
 }
 
+// 常见的 v-if 属性
 export function genIf (
   el: any,
   state: CodegenState,
   altGen?: Function,
   altEmpty?: string
 ): string {
+  // 标志位 避免递归调用 genIf
   el.ifProcessed = true // avoid recursion
   return genIfConditions(el.ifConditions.slice(), state, altGen, altEmpty)
 }
@@ -159,14 +169,18 @@ function genIfConditions (
   altEmpty?: string
 ): string {
   if (!conditions.length) {
+    // 如果没有相关 conditions ，直接返回空节点 _e = createEmptyVNode
     return altEmpty || '_e()'
   }
 
+  // 取 conditions 的第一个对象
   const condition = conditions.shift()
   if (condition.exp) {
     return `(${condition.exp})?${
+      // 调用 genElement 进入后面判断逻辑
       genTernaryExp(condition.block)
     }:${
+      // 递归调用当前方法
       genIfConditions(conditions, state, altGen, altEmpty)
     }`
   } else {
@@ -183,6 +197,7 @@ function genIfConditions (
   }
 }
 
+// 常见的 v-for 属性
 export function genFor (
   el: any,
   state: CodegenState,
@@ -200,6 +215,7 @@ export function genFor (
     el.tag !== 'template' &&
     !el.key
   ) {
+    // 对于 v-for 而言，如果在组件中，且没有定义 key ，报警告
     state.warn(
       `<${el.tag} v-for="${alias} in ${exp}">: component lists rendered with ` +
       `v-for should have explicit keys. ` +
@@ -209,7 +225,9 @@ export function genFor (
     )
   }
 
+  // 标志位
   el.forProcessed = true // avoid recursion
+  // 返回的参数 _l 代表 renderList 返回后再次调用 genElement
   return `${altHelper || '_l'}((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
       `return ${(altGen || genElement)(el, state)}` +
@@ -243,8 +261,9 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (el.component) {
     data += `tag:"${el.tag}",`
   }
-  // module data generation functions
+  // module data generation functions 上面的逻辑都不满足，就会直接执行到这里
   for (let i = 0; i < state.dataGenFns.length; i++) {
+    // 执行 class.js/style.js 中定义的方法，返回 JSON 字符串
     data += state.dataGenFns[i](el)
   }
   // attributes
@@ -256,7 +275,9 @@ export function genData (el: ASTElement, state: CodegenState): string {
     data += `domProps:${genProps(el.props)},`
   }
   // event handlers
+  // 当标签上绑定了事件，执行入该逻辑，例如 @click
   if (el.events) {
+    // 最终会返回一个类似于 on:{"click":function($event){clickItem(index)}}
     data += `${genHandlers(el.events, false)},`
   }
   if (el.nativeEvents) {
@@ -463,6 +484,7 @@ function genScopedSlot (
 export function genChildren (
   el: ASTElement,
   state: CodegenState,
+  // 传入的 checkSkip 参数值为 true
   checkSkip?: boolean,
   altGenElement?: Function,
   altGenNode?: Function
@@ -479,6 +501,7 @@ export function genChildren (
       const normalizationType = checkSkip
         ? state.maybeComponent(el) ? `,1` : `,0`
         : ``
+      // 如果是<li v-for></li>形式，就会进入到判断逻辑，执行 genElement 方法对 for 逻辑进行处理
       return `${(altGenElement || genElement)(el, state)}${normalizationType}`
     }
     const normalizationType = checkSkip
@@ -492,9 +515,10 @@ export function genChildren (
 }
 
 // determine the normalization needed for the children array.
-// 0: no normalization needed
-// 1: simple normalization needed (possible 1-level deep nested array)
-// 2: full normalization needed
+// normalize 操作就是把子节点扁平化，拍成一维
+// 0: no normalization needed；0 代表不需要 normalize 的操作
+// 1: simple normalization needed (possible 1-level deep nested array)；1 代表对一层嵌套数组扁平化
+// 2: full normalization needed；2 代表需要完整 normalize
 function getNormalizationType (
   children: Array<ASTNode>,
   maybeComponent: (el: ASTElement) => boolean
@@ -522,16 +546,26 @@ function needsNormalization (el: ASTElement): boolean {
   return el.for !== undefined || el.tag === 'template' || el.tag === 'slot'
 }
 
+/**
+ * 
+ * @param {*} node 
+ * @param {*} state 
+ * 作用：通过判断当前 ast 的类型判断返回对应执行函数
+ */
 function genNode (node: ASTNode, state: CodegenState): string {
   if (node.type === 1) {
+    // 1 普通节点 -> 再次调用 genElement
     return genElement(node, state)
   } else if (node.type === 3 && node.isComment) {
+    // 注释节点 -> 调用 genComment
     return genComment(node)
   } else {
+    // 其他节点 -> genText
     return genText(node)
   }
 }
 
+// 直接根据传入的参数判断是否为 表达式节点 -> 返回 expression
 export function genText (text: ASTText | ASTExpression): string {
   return `_v(${text.type === 2
     ? text.expression // no need for () because already wrapped in _s()
