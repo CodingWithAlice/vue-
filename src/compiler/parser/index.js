@@ -830,7 +830,7 @@ function processAttrs (el) {
     if (dirRE.test(name)) {
       // mark element as dynamic
       el.hasBindings = true
-      // modifiers
+      // modifiers 处理@click后面可能接的 .stop .sync
       modifiers = parseModifiers(name.replace(dirRE, ''))
       // support .foo shorthand syntax for the .prop modifier
       if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) {

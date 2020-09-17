@@ -242,6 +242,8 @@ export function parseHTML (html, options) {
     const unarySlash = match.unarySlash
 
     if (expectHTML) {
+      // 最后一个标签为 p，同时 tagName 为自定义的一些不能放在 p 标签内的标签
+      // 调用 end tag 手动结束 p 标签 -- 和浏览器保持一致
       if (lastTag === 'p' && isNonPhrasingTag(tagName)) {
         parseEndTag(lastTag)
       }
@@ -328,6 +330,7 @@ export function parseHTML (html, options) {
       stack.length = pos
       lastTag = pos && stack[pos - 1].tag
     } else if (lowerCasedTagName === 'br') {
+      // 处理了 br 标签
       if (options.start) {
         options.start(tagName, [], true, start, end)
       }

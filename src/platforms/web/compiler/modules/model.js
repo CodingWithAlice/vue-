@@ -23,6 +23,7 @@ import {
   createASTElement
 } from 'compiler/parser/index'
 
+// 处理 tag 为 input 时的 v-model、:type、radio等
 function preTransformNode (el: ASTElement, options: CompilerOptions) {
   if (el.tag === 'input') {
     const map = el.attrsMap
