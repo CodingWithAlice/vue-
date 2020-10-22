@@ -59,6 +59,7 @@ export function genHandlers (
   const prefix = isNative ? 'nativeOn:' : 'on:'
   let staticHandlers = ``
   let dynamicHandlers = ``
+  // events 可能是事件名称/也可能是事件名称组成的数组
   for (const name in events) {
     const handlerCode = genHandler(events[name])
     if (events[name] && events[name].dynamic) {
@@ -98,15 +99,20 @@ function genHandler (handler: ASTElementHandler | Array<ASTElementHandler>): str
     return 'function(){}'
   }
 
+  // 如果是事件组成的数组，那么将结果拼接成数组
   if (Array.isArray(handler)) {
     return `[${handler.map(handler => genHandler(handler)).join(',')}]`
   }
 
+  // 如果是一个事件，判断事件是否满足简单的 正则名称路径 a.b a['b'] a["b"] a[b] a[0]
   const isMethodPath = simplePathRE.test(handler.value)
+  // 匹配箭头函数/function开头的函数
   const isFunctionExpression = fnExpRE.test(handler.value)
   const isFunctionInvocation = simplePathRE.test(handler.value.replace(fnInvokeRE, ''))
 
+  // 没有修饰符的情况
   if (!handler.modifiers) {
+    // 也满足简单路径和函数表达式，则直接返回函数体即可
     if (isMethodPath || isFunctionExpression) {
       return handler.value
     }
@@ -114,14 +120,16 @@ function genHandler (handler: ASTElementHandler | Array<ASTElementHandler>): str
     if (__WEEX__ && handler.params) {
       return genWeexHandler(handler.params, handler.value)
     }
+    // 不满足简单路径，例如 handler($event) ，则手动返回
     return `function($event){${
       isFunctionInvocation ? `return ${handler.value}` : handler.value
     }}` // inline statement
   } else {
+  // 有修饰符的情况 - 生成和修饰符相关的代码
     let code = ''
     let genModifierCode = ''
     const keys = []
-    for (const key in handler.modifiers) {
+    for (const key in handler.modifiers) { // 遍历修饰符
       if (modifierCode[key]) {
         genModifierCode += modifierCode[key]
         // left/right
@@ -129,6 +137,7 @@ function genHandler (handler: ASTElementHandler | Array<ASTElementHandler>): str
           keys.push(key)
         }
       } else if (key === 'exact') {
+        // 特殊 key 的处理
         const modifiers: ASTModifiers = (handler.modifiers: any)
         genModifierCode += genGuard(
           ['ctrl', 'shift', 'alt', 'meta']
@@ -140,17 +149,19 @@ function genHandler (handler: ASTElementHandler | Array<ASTElementHandler>): str
         keys.push(key)
       }
     }
-    if (keys.length) {
+    if (keys.length) {  // 和键盘相关
       code += genKeyFilter(keys)
     }
     // Make sure modifiers like prevent and stop get executed after key filtering
     if (genModifierCode) {
+      // 将修饰符生成的代码进行拼接
       code += genModifierCode
     }
+    // 生成最终的函数代码
     const handlerCode = isMethodPath
-      ? `return ${handler.value}($event)`
+      ? `return ${handler.value}($event)` // 拼接参数返回函数体
       : isFunctionExpression
-        ? `return (${handler.value})($event)`
+        ? `return (${handler.value})($event)` // 将函数立即执行一下返回结果
         : isFunctionInvocation
           ? `return ${handler.value}`
           : handler.value
@@ -158,6 +169,7 @@ function genHandler (handler: ASTElementHandler | Array<ASTElementHandler>): str
     if (__WEEX__ && handler.params) {
       return genWeexHandler(handler.params, code + handlerCode)
     }
+    // 最终结果，使用下方模版进行包裹 ： 修饰符代码 + 函数体代码
     return `function($event){${code}${handlerCode}}`
   }
 }
@@ -172,6 +184,7 @@ function genKeyFilter (keys: Array<string>): string {
   )
 }
 
+// 键盘相关处理
 function genFilterCode (key: string): string {
   const keyVal = parseInt(key, 10)
   if (keyVal) {

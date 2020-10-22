@@ -274,7 +274,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (el.props) {
     data += `domProps:${genProps(el.props)},`
   }
-  // event handlers
+  // genHandlers 在这里处理事件，目标是生成和事件相关的代码
   // 当标签上绑定了事件，执行入该逻辑，例如 @click
   if (el.events) {
     // 最终会返回一个类似于 on:{"click":function($event){clickItem(index)}}

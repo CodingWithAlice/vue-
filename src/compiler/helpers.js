@@ -67,6 +67,8 @@ function prependModifierMarker (symbol: string, name: string, dynamic?: boolean)
     : symbol + name // mark the event as captured
 }
 
+// 作用：给 AST 节点添加 events/nativeEvents 的属性
+// 结果：添加的属性是对象类型，key 为 事件属性名；value 为绑定的方法名/方法名组成的数组；
 export function addHandler (
   el: ASTElement,
   name: string,
@@ -109,7 +111,7 @@ export function addHandler (
     }
   }
 
-  // check capture modifier
+  // check capture modifier - 对 .capture.once.passive 做不同符号的标记 ，在运行时使用
   if (modifiers.capture) {
     delete modifiers.capture
     name = prependModifierMarker('!', name, dynamic)
@@ -125,6 +127,7 @@ export function addHandler (
   }
 
   let events
+  // 给节点添加 events属性，分 nativeEvents events，但是都是对象类型
   if (modifiers.native) {
     delete modifiers.native
     events = el.nativeEvents || (el.nativeEvents = {})
@@ -132,6 +135,7 @@ export function addHandler (
     events = el.events || (el.events = {})
   }
 
+  // 构造一个对象， value 值就是在模版中绑定的值：例如 @click="handler(item)"中的 handler(item)
   const newHandler: any = rangeSetItem({ value: value.trim(), dynamic }, range)
   if (modifiers !== emptyObject) {
     newHandler.modifiers = modifiers
@@ -139,6 +143,7 @@ export function addHandler (
 
   const handlers = events[name]
   /* istanbul ignore if */
+  // 这块的代码作用：一个属性可以绑定多个事件 -> 第一次绑定的时候直接赋值；已存在时赋值为数组
   if (Array.isArray(handlers)) {
     important ? handlers.unshift(newHandler) : handlers.push(newHandler)
   } else if (handlers) {

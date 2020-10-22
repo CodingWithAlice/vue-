@@ -821,25 +821,31 @@ function processComponent (el) {
   }
 }
 
+// DOM/自定义事件 步骤一：编译部分 - 将html编译成AST树流程中，会先生成DOM节点，再生成树
+// 生成DOM节点的过程中，处理相应属性 执行processAttrs
 function processAttrs (el) {
   const list = el.attrsList
   let i, l, name, rawName, value, modifiers, syncGen, isDynamic
+  // 遍历 attrsList
   for (i = 0, l = list.length; i < l; i++) {
     name = rawName = list[i].name
     value = list[i].value
+    // 指令 v- @ :
     if (dirRE.test(name)) {
-      // mark element as dynamic
+      // mark element as dynamic - 设置标志位
       el.hasBindings = true
-      // modifiers 处理@click后面可能接的 .stop .sync
+      // parseModifiers - 获取修饰符名称：如  .stop .sync .native .prevent
       modifiers = parseModifiers(name.replace(dirRE, ''))
       // support .foo shorthand syntax for the .prop modifier
       if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) {
         (modifiers || (modifiers = {})).prop = true
         name = `.` + name.slice(1).replace(modifierRE, '')
       } else if (modifiers) {
+        // 存在修饰符时，将属性中的修饰符删除，保留真正的属性名：如 @click
         name = name.replace(modifierRE, '')
       }
-      if (bindRE.test(name)) { // v-bind
+    // 特殊处理：v-bind，删除 : 符号，保证 name 只是修饰符
+      if (bindRE.test(name)) { 
         name = name.replace(bindRE, '')
         value = parseFilters(value)
         isDynamic = dynamicArgRE.test(name)
@@ -856,8 +862,9 @@ function processAttrs (el) {
         }
         if (modifiers) {
           if (modifiers.prop && !isDynamic) {
+            // - 分隔符处理成 驼峰
             name = camelize(name)
-            if (name === 'innerHtml') name = 'innerHTML'
+            if (name === 'innerHtml') name = 'innerHTML' // 注意这里转换了大小写
           }
           if (modifiers.camel && !isDynamic) {
             name = camelize(name)
@@ -907,12 +914,14 @@ function processAttrs (el) {
         } else {
           addAttr(el, name, value, list[i], isDynamic)
         }
-      } else if (onRE.test(name)) { // v-on
+      } else if (onRE.test(name)) { 
+    // 特殊处理：v-on
         name = name.replace(onRE, '')
         isDynamic = dynamicArgRE.test(name)
         if (isDynamic) {
           name = name.slice(1, -1)
         }
+        // 给节点绑定 events/nativeEvents 属性，属性值为 {key【事件属性名】: value【绑定事件方法名称/数组】}
         addHandler(el, name, value, modifiers, false, warn, list[i], isDynamic)
       } else { // normal directives
         name = name.replace(dirRE, '')
@@ -970,7 +979,9 @@ function checkInFor (el: ASTElement): boolean {
 }
 
 function parseModifiers (name: string): Object | void {
+  // modifierRE 是一个匹配修饰符的正则表达式
   const match = name.match(modifierRE)
+  // 对结果中的 . 符号进行删除，返回修饰符的名称
   if (match) {
     const ret = {}
     match.forEach(m => { ret[m.slice(1)] = true })
