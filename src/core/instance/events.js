@@ -118,7 +118,7 @@ export function eventsMixin (Vue: Class<Component>) {
     const vm: Component = this
     if (process.env.NODE_ENV !== 'production') {
       const lowerCaseEvent = event.toLowerCase()
-      // 大小写的提示   
+      // 大小写的提示    
       if (lowerCaseEvent !== event && vm._events[lowerCaseEvent]) {
         tip(
           `Event "${lowerCaseEvent}" is emitted in component ` +
