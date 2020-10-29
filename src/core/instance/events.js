@@ -129,7 +129,7 @@ export function eventsMixin (Vue: Class<Component>) {
         )
       }
     }
-    // 拿到对应事件名的 callback 函数进行执行
+    // 拿到对应事件名的 cal lback 函数进行执行
     let cbs = vm._events[event]
     if (cbs) {
       cbs = cbs.length > 1 ? toArray(cbs) : cbs
