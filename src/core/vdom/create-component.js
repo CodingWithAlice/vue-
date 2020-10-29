@@ -203,10 +203,11 @@ export function createComponent (
 
   // extract listeners, since these needs to be treated as
   // child component listeners instead of DOM listeners
-  // 自定义事件的处理
+  // 自定义事件的处理：所以普通节点只能定义原生事件，组件可以定义自定义事件
   const listeners = data.on
   // replace with listeners with .native modifier
   // so it gets processed during parent component patch.
+  // 将原生事件转到 on 
   data.on = data.nativeOn
 
   // 抽象组件

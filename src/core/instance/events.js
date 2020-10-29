@@ -12,7 +12,6 @@ import { updateListeners } from '../vdom/helpers/index'
 export function initEvents (vm: Component) {
   vm._events = Object.create(null)
   vm._hasHookEvent = false
-  // init parent attached events
   // 获得父组件的监听器添加给当前component实例
   const listeners = vm.$options._parentListeners
   if (listeners) {
@@ -50,6 +49,7 @@ export function updateComponentListeners (
   target = undefined
 }
 
+// 针对自定义事件，这里自定义了 $on $off $once $emit 四个方法来处理
 export function eventsMixin (Vue: Class<Component>) {
   const hookRE = /^hook:/
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
@@ -60,8 +60,6 @@ export function eventsMixin (Vue: Class<Component>) {
       }
     } else {
       (vm._events[event] || (vm._events[event] = [])).push(fn)
-      // optimize hook:event cost by using a boolean flag marked at registration
-      // instead of a hash lookup
       if (hookRE.test(event)) {
         vm._hasHookEvent = true
       }
@@ -120,6 +118,7 @@ export function eventsMixin (Vue: Class<Component>) {
     const vm: Component = this
     if (process.env.NODE_ENV !== 'production') {
       const lowerCaseEvent = event.toLowerCase()
+      // 大小写的提示   
       if (lowerCaseEvent !== event && vm._events[lowerCaseEvent]) {
         tip(
           `Event "${lowerCaseEvent}" is emitted in component ` +
@@ -130,6 +129,7 @@ export function eventsMixin (Vue: Class<Component>) {
         )
       }
     }
+    // 拿到对应事件名的 callback 函数进行执行
     let cbs = vm._events[event]
     if (cbs) {
       cbs = cbs.length > 1 ? toArray(cbs) : cbs

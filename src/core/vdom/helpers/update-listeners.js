@@ -33,6 +33,7 @@ const normalizeEvent = cached((name: string): {
   }
 })
 
+// 这里就是触发事件后执行的回调函数
 export function createFnInvoker (fns: Function | Array<Function>, vm: ?Component): Function {
   function invoker () {
     const fns = invoker.fns
@@ -50,6 +51,7 @@ export function createFnInvoker (fns: Function | Array<Function>, vm: ?Component
   return invoker
 }
 
+// 更新和创建不同的点就是把 old 的 fns 更新即可
 export function updateListeners (
   on: Object,
   oldOn: Object,
@@ -78,6 +80,7 @@ export function updateListeners (
         cur = on[name] = createFnInvoker(cur, vm)
       }
       if (isTrue(event.once)) {
+        // 如果有 once 的修饰符，就调用下面的方法，返回的函数是：执行完一次之后，就 remove 移除
         cur = on[name] = createOnceHandler(event.name, cur, event.capture)
       }
       add(event.name, cur, event.capture, event.passive, event.params)

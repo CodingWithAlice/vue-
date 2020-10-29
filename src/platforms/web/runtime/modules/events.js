@@ -29,6 +29,7 @@ function normalizeEvents (on) {
 
 let target: any
 
+// 执行一次就移除
 function createOnceHandler (event, handler, capture) {
   const _target = target // save current target element in closure
   return function onceHandler () {
@@ -80,6 +81,7 @@ function add (
       }
     }
   }
+  // 真正给 DOM 事件添加回调的地方
   target.addEventListener(
     name,
     handler,
