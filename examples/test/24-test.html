@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app">
+        <!-- <h2>h2标题</h2>
+        <p>{{foo}}</p> -->
+    </div>
+    <script src="../../dist/vue.js"></script>
+    <script>
+        new Vue({
+            el:'#app',
+            render(creatElement) {
+                return creatElement('div',{
+                    attr: {
+                        id: 'app',
+                    }
+                },this.foo)
+            },
+            data: {
+                foo: 'foo1',
+            }
+        });
+    </script>
+</body>
+</html>
